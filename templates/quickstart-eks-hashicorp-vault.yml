@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Deploys the Hashicorp Vault helm chart into an existing kubernetes cluster (qp-1qmcrhdml)"
+Description: "Deploys the Hashicorp Vault helm chart into a Kubernetes cluster (qp-1qmcrhdml)"
 Metadata:
   QSLint:
     Exclusions: [W9002, W9003, W9004, W9006]
@@ -7,19 +7,282 @@ Parameters:
   ClusterName:
     Type: String
     Description: Amazon EKS Cluster
-  ChartURI:
-    Default: ""
-    Description: "Vault Helm Chart URI, either github or s3 location eg: 'https://github.com/hashicorp/vault-helm/archive/v0.5.0.tar.gz' or 's3://<bucket>/<prefix>/charts/vault-helm-0.5.0.tar.gz'"
+  KubeManifestLambdaArn:
     Type: String
+    Description: Custom Resource Lamda ARN for execution of kubectl manifest files
+  VaultVersion:
+    Type: String
+    Default: "1.4.0"
+    AllowedValues: 
+    - "1.4.0"
+  Nodes:
+    Type: Number
+    Default: "5"
+    AllowedValues:
+      - "5"
+      - "7"
+      - "9"
+  BootStrapScriptS3URI:
+    Type: String
+    Default: s3://aws-quickstart/quickstart-eks-hashicorp-vault/scripts.yml
+#Mappings:
+#  VaultVersions:
+#    Vault1.4: https://github.com/hashicorp/vault-helm/archive/v0.5.0.tar.gz
+Conditions:
+  # TODO: Create Node Group condition 
+  CreateCluster: !Equals [ !Ref ClusterName, "" ]
 Resources:
+  #EKSCluster:
+  # TODO: Nodegroup create with Labels only for Vault other stuff is dissallowed
+  #  Type: AWSQS::EKS::Cluster 
+  #  Condition: CreateCluster
+  #    3 Node minimum (Expose)
+  #    EKS Cluster Node size - m5.large (Expose)
+  #    Private EKS Cluster 3 AZ
+  #    AccessCidr - Disabled or Private (Expose)
+  #    CloudWatch - Logging by Default (Expose)
+  #    Additional Expose AdminUserArn (Expose)
+  #    Additional Expose AdminRoleArn (Expose)
+  #    AutoScaler enabled for the EKS Cluster
+  #    ProvisionBastionHost: disabled (Expose)
+  VaultRole:
+    Type: AWS::IAM::Role
+    Properties:
+      #RoleName: !Sub "VaultInstanceRole-${VaultSecGroup}"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - ec2.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogStream
+            - logs:DescribeLogStreams
+            Resource:
+            - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:Vault-Audit-Logs-${AWS::StackName}"
+          - Effect: Allow
+            Action:
+            - logs:PutLogEvents
+            Resource:
+            - !Sub "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:Vault-Audit-Logs-${AWS::StackName}:log-stream:*"
+          - Effect: Allow
+            Action:
+            - ec2:DescribeInstances
+            Resource: "*"
+          #- Effect: Allow
+          #  Action:
+          #  - secretsmanager:UpdateSecretVersionStage
+          #  - secretsmanager:UpdateSecret
+          #  - secretsmanager:PutSecretValue
+          #  - secretsmanager:GetSecretValue
+          #  Resource:
+          #  - !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:VaultSecret-${VaultSecGroup}*"
+          #- Effect: Allow
+          #  Action:
+          #    - iam:GetRole
+          #  Resource: !GetAtt VaultClientRole.Arn
+  VaultKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: "Vault Seal/Unseal key"
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: key-default-1
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+          Action: kms:*
+          Resource: '*'
+        - Sid: Allow administration of the key
+          Effect: Allow
+          Principal:
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/${VaultRole}"
+          Action:
+          - kms:Create*
+          - kms:Describe*
+          - kms:Enable*
+          - kms:List*
+          - kms:Put*
+          - kms:Update*
+          - kms:Revoke*
+          - kms:Disable*
+          - kms:Get*
+          - kms:Delete*
+          - kms:ScheduleKeyDeletion
+          - kms:CancelKeyDeletion
+          Resource: '*'
+        - Sid: Allow use of the key
+          Effect: Allow
+          Principal:
+            # If the Lambda Functions need to use this key we must add their execution roles here as principles
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/${VaultRole}"
+          Action:
+          - kms:DescribeKey
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:ReEncrypt*
+          - kms:GenerateDataKey
+          - kms:GenerateDataKeyWithoutPlaintext
+          Resource: '*'
   HashicorpVaultHelmChart:
     Type: "AWSQS::Kubernetes::Helm"
     Properties:
       ClusterID: !Ref ClusterName
-      Chart: !Ref ChartURI
+      Repository: https://helm.releases.hashicorp.com
+      Namespace: vault
+      Chart: hashicorp/vault
+      # TODO: Add kubernetes service role
       Values: 
-        ha.enabled: true
-        ha.nodes: 5
+        ui.enabled: true
+        injector.agentImage.tag: !Ref VaultVersion
+        server.image.tag: !Ref VaultVersion
+        server.ha.enabled: true
+        server.ha.nodes: !Ref Nodes
+        server.ha.raft.enabled: true
+        server.ha.config: !Sub
+        - |
+          ui = true
+          
+          listener "tcp" {
+            tls_disable = 1
+            address = "[::]:8200"
+            cluster_address = "[::]:8201"
+          }
+          
+          storage "raft" {
+            path    = "/var/vault"
+          }
+          
+          service_registration "kubernetes" {}
+
+          seal "awskms" {
+            region     = "${AWS::Region}"
+            kms_key_id = "${VaultKmsKey}"
+          }
+        - SomeValue: somevalue
+  VaultClusterRole:
+    Type: "Custom::KubeManifest"
+    Version: '1.0'
+    Properties:
+      ServiceToken: !Ref KubeManifestLambdaArn
+      ClusterName: !Ref ClusterName        
+      Manifest: !Sub
+      - |
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRole
+        metadata:
+          labels:
+            app.kubernetes.io/name: ${ResourceName}
+          name: ${ResourceName}
+        # Modify for your scripts here
+        rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          verbs:
+          - get
+      - ResourceName: booter-vault
+        NameSpace: default
+        S3ScriptURL: !Ref BootStrapScriptS3URI
+        RoleName: !Ref VaultRole
+  VaultServiceAccount:
+    Type: "Custom::KubeManifest"
+    Version: '1.0'
+    Properties:
+      ServiceToken: !Ref KubeManifestLambdaArn
+      ClusterName: !Ref ClusterName        
+      Manifest: !Sub
+      - |
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          labels:
+            app.kubernetes.io/name: ${ResourceName}
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::${AWS::AccountId}:role/${RoleName}
+          name: ${ResourceName}
+          namespace: ${NameSpace}
+      - ResourceName: booter-vault
+        NameSpace: default
+        S3ScriptURL: !Ref BootStrapScriptS3URI
+        RoleName: !Ref VaultRole
+  VaultInitialisationJob:
+    Type: "Custom::KubeManifest"
+    Version: '1.0'
+    Properties:
+      ServiceToken: !Ref KubeManifestLambdaArn
+      ClusterName: !Ref ClusterName        
+      Manifest: !Sub
+      - |
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          name: ${ResourceName}
+          namespace: ${NameSpace}
+        spec:
+          template:
+            spec:
+              containers:
+              - name: ${ResourceName}
+                image: amazon/aws-cli
+                command: ["/bin/bash","-c"]
+                args:
+                - >
+                  export AWS_REGION=${AWS::Region} &&
+                  aws s3 cp ${!S3_SCRIPT_URL} ./script.sh &&
+                  chmod +x ./script.sh &&
+                  ./script.sh
+                env:
+                - name: S3_SCRIPT_URL
+                  value: ${S3ScriptURL}
+              serviceAccountName: ${ResourceName}
+              restartPolicy: Never
+          backoffLimit: 4
+      - ResourceName: booter-vault
+        NameSpace: default
+        S3ScriptURL: !Ref BootStrapScriptS3URI
+        RoleName: !Ref VaultRole
+  VaultClusterRoleBinding:
+    Type: "Custom::KubeManifest"
+    Version: '1.0'
+    Properties:
+      ServiceToken: !Ref KubeManifestLambdaArn
+      ClusterName: !Ref ClusterName        
+      Manifest: !Sub
+      - |
+        apiVersion: rbac.authorization.k8s.io/v1
+        kind: ClusterRoleBinding
+        metadata:
+          labels:
+            app.kubernetes.io/name: ${ResourceName}
+          name: ${ResourceName}
+        roleRef:
+          apiGroup: rbac.authorization.k8s.io
+          kind: ClusterRole
+          name: ${ResourceName}
+        subjects:
+        - kind: ServiceAccount
+          name: ${ResourceName}
+          namespace: ${NameSpace}
+      - ResourceName: booter-vault
+        NameSpace: default
+        S3ScriptURL: !Ref BootStrapScriptS3URI
+        RoleName: !Ref VaultRole
 Outputs:
   HashicorpVaultReleaseName:
     Value: !Ref HashicorpVaultHelmChart
+
+
