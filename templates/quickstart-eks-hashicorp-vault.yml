@@ -9,9 +9,9 @@ Parameters:
     Description: Amazon EKS Cluster
   VaultVersion:
     Type: String
-    Default: "1.4.2"
+    Default: "1.4.3"
     AllowedValues: 
-    - "1.4.2"
+    - "1.4.3"
   KubernetesNameSpace:
     Default: default
     Type: String
@@ -51,10 +51,14 @@ Resources:
   #    Additional Expose AdminRoleArn (Expose)
   #    AutoScaler enabled for the EKS Cluster
   #    ProvisionBastionHost: disabled (Expose)
+  PsuedoRandom:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: DoNotUse
   VaultRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: "VaultInstanceRole-acb"
+      RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
       AssumeRolePolicyDocument: !Sub
       - |
         {
@@ -109,11 +113,11 @@ Resources:
             - secretsmanager:PutSecretValue
             - secretsmanager:GetSecretValue
             Resource:
-            - !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:VaultSecret-Abc*"
+            - !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:VaultSecret-${PsuedoRandom.GroupId}*"
           - Effect: Allow
             Action:
               - iam:GetRole
-            Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:role/VaultInstanceRole-acb"
+            Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultKmsKey:
     Type: AWS::KMS::Key
     DependsOn: VaultRole
@@ -132,7 +136,7 @@ Resources:
         - Sid: Allow administration of the key
           Effect: Allow
           Principal:
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultInstanceRole-acb"
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
           Action:
           - kms:Create*
           - kms:Describe*
@@ -151,7 +155,7 @@ Resources:
           Effect: Allow
           Principal:
             # If the Lambda Functions need to use this key we must add their execution roles here as principles
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultInstanceRole-acb"
+            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
           Action:
           - kms:DescribeKey
           - kms:Encrypt
@@ -176,44 +180,52 @@ Resources:
       Name: vault
       Chart: hashicorp/vault
       # TODO: Add kubernetes service role
-      Values:
-        ui.enabled: true
-        injector.agentImage.tag: !Ref VaultVersion
-        server.image.tag: !Ref VaultVersion
-        server.logLevel: "warn" 
-        server.serviceAccount.annotations: !Sub |
-          eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS::AccountId}:role/VaultInstanceRole-acb"
-        server.ha.enabled: true
-        server.ha.nodes: !Ref Nodes
-        server.ha.raft.enabled: true
-        server.ha.raft.setNodeId: true
-        server.ha.raft.config: !Sub
-        - |
-          ui = true
-          
-          listener "tcp" {
-            tls_disable = 1
-            address = "[::]:8200"
-            cluster_address = "[::]:8201"
-          }
-          
-          storage "raft" {
-            path    = "/vault/data"
-          }
-          
-          service_registration "kubernetes" {}
+      ValueYaml: !Sub
+      - |
+        # ${SomeValue}
+        ui:
+          enabled: true
+        server:
+          image:
+            repository: "vault"
+            tag: ${VaultVersion}
+          logLevel: "debug"
+          serviceAccount:
+            annotations: !Sub |
+              eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
+          extraEnvironmentVars: # for 1.4.3 no auto assigned name
+            AWS_ROLE_SESSION_NAME: some_name
+          ha:
+            enabled: true
+            nodes: ${Nodes}
+            raft:
+              enabled: true
+              setNodeId: true
+              config: |
+                ui = true
 
-          #seal "awskms" {
-          #  region     = "${AWS::Region}"
-          #  kms_key_id = "${VaultKmsKey}"
-          #}
-        - SomeValue: somevalue
+                listener "tcp" {
+                  tls_disable = 1
+                  address = "[::]:8200"
+                  cluster_address = "[::]:8201"
+                }
+
+                storage "raft" {
+                  path    = "/vault/data"
+                }
+
+                service_registration "kubernetes" {}
+
+                seal "awskms" {
+                  region     = "${AWS::Region}"
+                  kms_key_id = "${VaultKmsKey}"
+                }
+      - SomeValue: "test"
   VaultClusterRole:
-    Type: "Custom::KubeManifest"
-    Version: '1.0'
+    Type: "AWSQS::Kubernetes::Resource"
     Properties:
-      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:EKS-QuickStart-KubeManifest-${ClusterName}"
-      ClusterName: !Ref ClusterName        
+      ClusterName: !Ref ClusterName
+      Namespace: !Ref KubernetesNameSpace
       Manifest: !Sub
       - |
         apiVersion: rbac.authorization.k8s.io/v1
@@ -237,13 +249,12 @@ Resources:
       - ResourceName: booter-vault
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: VaultInstanceRole-acb
+        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultServiceAccount:
-    Type: "Custom::KubeManifest"
-    Version: '1.0'
+    Type: "AWSQS::Kubernetes::Resource"
     Properties:
-      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:EKS-QuickStart-KubeManifest-${ClusterName}"
-      ClusterName: !Ref ClusterName        
+      ClusterName: !Ref ClusterName
+      Namespace: !Ref KubernetesNameSpace
       Manifest: !Sub
       - |
         apiVersion: v1
@@ -258,13 +269,12 @@ Resources:
       - ResourceName: booter-vault
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: VaultInstanceRole-acb
+        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultInitialisationJob:
-    Type: "Custom::KubeManifest"
-    Version: '1.0'
+    Type: "AWSQS::Kubernetes::Resource"
     Properties:
-      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:EKS-QuickStart-KubeManifest-${ClusterName}"
-      ClusterName: !Ref ClusterName        
+      ClusterName: !Ref ClusterName
+      Namespace: !Ref KubernetesNameSpace
       Manifest: !Sub
       - |
         apiVersion: batch/v1
@@ -301,13 +311,11 @@ Resources:
       - ResourceName: booter-vault
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: VaultInstanceRole-acb
+        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultClusterRoleBinding:
-    Type: "Custom::KubeManifest"
-    Version: '1.0'
+    Type: "AWSQS::Kubernetes::Resource"
     Properties:
-      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:EKS-QuickStart-KubeManifest-${ClusterName}"
-      ClusterName: !Ref ClusterName        
+      ClusterName: !Ref ClusterName
       Manifest: !Sub
       - |
         apiVersion: rbac.authorization.k8s.io/v1
@@ -327,9 +335,9 @@ Resources:
       - ResourceName: booter-vault
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: !Ref VaultRole
-Outputs:
-  HashicorpVaultReleaseName:
-    Value: !Ref HashicorpVaultHelmChart
+        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
+#Outputs:
+#  HashicorpVaultReleaseName:
+#    Value: !Ref HashicorpVaultHelmChart
 
 
