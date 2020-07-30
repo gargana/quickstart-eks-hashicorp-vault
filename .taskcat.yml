@@ -5,6 +5,7 @@ project:
   shorten_stack_name: true
   lambda_source_path: functions/source
   lambda_zip_path: functions/packages
+  s3_use_regional_buckets: true
   regions:
   - eu-north-1
   - ap-south-1
@@ -24,8 +25,13 @@ project:
   parameters:
     ClusterName: override
     ChartURI: override
+    QSS3BucketName: $[taskcat_autobucket]
+    QSS3BucketRegion: $[taskcat_current_region]
+    QSS3KeyPrefix: quickstart-eks-hashicorp-vault/
 tests:
-  single-region:
+  vault-eks-single:
     regions:
-     - us-east-2
+    - eu-west-1
+    parameters:
+      QSS3BucketRegion:
     template: templates/quickstart-eks-hashicorp-vault.yml

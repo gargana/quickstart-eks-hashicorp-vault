@@ -25,12 +25,29 @@ Parameters:
       - "5"
       - "7"
       - "9"
-  BootStrapScriptS3URI:
+  QSS3BucketName:
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    ConstraintDescription: Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description: S3 bucket name for the Quick Start assets. Quick Start bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
     Type: String
-    Default: s3://aws-quickstart/quickstart-eks-hashicorp-vault/scripts/bootstrap.sh
-  ValuesYamlURI:
-    Type: String 
-    Default :  s3://aws-quickstart/quickstart-eks-hashicorp-vault/scripts/values.yaml
+  QSS3BucketRegion:
+    Default: 'us-east-1'
+    Description: 'The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.'
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: "^[0-9a-zA-Z-/]*$"
+    ConstraintDescription: Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: quickstart-eks-hashicorp-vault/
+    Description: S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    Type: String
 #Mappings:
 #  VaultVersions:
 #    Vault1.4: https://github.com/hashicorp/vault-helm/archive/v0.5.0.tar.gz
@@ -291,7 +308,7 @@ Resources:
           - create 
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
-        S3ScriptURL: !Ref BootStrapScriptS3URI
+
   VaultServiceAccount:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -310,7 +327,6 @@ Resources:
           namespace: ${NameSpace}
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
-        S3ScriptURL: !Ref BootStrapScriptS3URI
         RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultInitialisationJob:
     Type: "AWSQS::Kubernetes::Resource"
@@ -352,7 +368,7 @@ Resources:
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
         ReleaseName: !Sub "${PsuedoRandom.GroupId}"
-        S3ScriptURL: !Ref BootStrapScriptS3URI
+        S3ScriptURL: !Sub "s3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh"
   VaultClusterRoleBinding:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -375,7 +391,6 @@ Resources:
           namespace: ${NameSpace}
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
-        S3ScriptURL: !Ref BootStrapScriptS3URI
 Outputs:
   HashicorpVaultReleaseName:
     Value: !Sub "vault-${PsuedoRandom.GroupId}"
