@@ -72,7 +72,7 @@ Resources:
               "Action": "sts:AssumeRoleWithWebIdentity",
               "Condition": {
                 "StringEquals": {
-                  "${OIDCProvider}:sub": "system:serviceaccount:${NameSpace}:${ResourceName}"
+                  "${OIDCProvider}:sub": "system:serviceaccount:${NameSpace}:${ResourceName}-${PsuedoRandom.GroupId}"
                 }
               }
             }
@@ -220,7 +220,7 @@ Resources:
       ClusterID: !Ref ClusterName
       Repository: https://helm.releases.hashicorp.com
       Namespace: !Ref KubernetesNameSpace
-      Name: vault
+      Name: !Sub "vault-${PsuedoRandom.GroupId}"
       Chart: hashicorp/vault
       # TODO: Add kubernetes service role
       ValueYaml: !Sub
@@ -336,6 +336,7 @@ Resources:
                   sleep 15;
                   yum install -y awscli;
                   export AWS_REGION=${AWS::Region};
+                  export RELEASE_NAME=${ReleaseName};
                   aws sts get-caller-identity;
                   aws s3 cp ${!S3_SCRIPT_URL} ./script.sh &&
                   chmod +x ./script.sh &&
@@ -350,6 +351,7 @@ Resources:
           backoffLimit: 4
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
+        ReleaseName: !Sub "${PsuedoRandom.GroupId}"
         S3ScriptURL: !Ref BootStrapScriptS3URI
   VaultClusterRoleBinding:
     Type: "AWSQS::Kubernetes::Resource"
@@ -376,6 +378,6 @@ Resources:
         S3ScriptURL: !Ref BootStrapScriptS3URI
 Outputs:
   HashicorpVaultReleaseName:
-    Value: !Ref HashicorpVaultHelmChart
+    Value: !Sub "vault-${PsuedoRandom.GroupId}"
 
 
