@@ -23,8 +23,10 @@ project:
   - us-east-2
   - us-west-2
   parameters:
+    VaultVersion: "1.5.0"
+    Nodes: "3"
     ClusterName: override
-    ChartURI: override
+    OIDCProvider: override
     QSS3BucketName: $[taskcat_autobucket]
     QSS3BucketRegion: $[taskcat_current_region]
     QSS3KeyPrefix: quickstart-eks-hashicorp-vault/
