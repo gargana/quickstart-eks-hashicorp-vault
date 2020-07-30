@@ -9,9 +9,9 @@ Parameters:
     Description: Amazon EKS Cluster
   VaultVersion:
     Type: String
-    Default: "1.4.3"
+    Default: "1.5.0"
     AllowedValues: 
-    - "1.4.3"
+    - "1.5.0"
   KubernetesNameSpace:
     Default: default
     Type: String
@@ -55,6 +55,45 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: DoNotUse
+  VaultUnsealRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "VaultUnsealIAMRole-${PsuedoRandom.GroupId}"
+      AssumeRolePolicyDocument: !Sub
+      - |
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "arn:aws:iam::${AWS::AccountId}:oidc-provider/${OIDCProvider}"
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "${OIDCProvider}:sub": "system:serviceaccount:${NameSpace}:${ResourceName}"
+                }
+              }
+            }
+          ]
+        }
+      - NameSpace: !Ref KubernetesNameSpace
+        ResourceName: vault
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - iam:GetRole
+            Resource: !Sub "arn:${AWS::Partition}:secretsmanager:${AWS::Region}:${AWS::AccountId}:role/VaultUnsealIAMRole-${PsuedoRandom.GroupId}"
+          - Effect: Allow
+            Action:
+              - kms:*
+            Resource: "*"
   VaultRole:
     Type: AWS::IAM::Role
     Properties:
@@ -79,7 +118,7 @@ Resources:
           ]
         }
       - NameSpace: !Ref KubernetesNameSpace
-        ResourceName: booter-vault
+        ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
       Path: "/"
       Policies:
       - PolicyName: root
@@ -136,7 +175,9 @@ Resources:
         - Sid: Allow administration of the key
           Effect: Allow
           Principal:
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
+            AWS:
+            - !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultUnsealIAMRole-${PsuedoRandom.GroupId}"
           Action:
           - kms:Create*
           - kms:Describe*
@@ -155,7 +196,9 @@ Resources:
           Effect: Allow
           Principal:
             # If the Lambda Functions need to use this key we must add their execution roles here as principles
-            AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
+            AWS:
+            - !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
+            - !Sub "arn:aws:iam::${AWS::AccountId}:role/VaultUnsealIAMRole-${PsuedoRandom.GroupId}"
           Action:
           - kms:DescribeKey
           - kms:Encrypt
@@ -167,7 +210,7 @@ Resources:
   VaultSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: "VaultSecret-Abc"
+      Name: !Sub "VaultSecret-${PsuedoRandom.GroupId}"
       Description: "Vault Root/Recovery key"
       KmsKeyId: !Ref VaultKmsKey 
       SecretString: "empty"
@@ -192,7 +235,7 @@ Resources:
           logLevel: "debug"
           serviceAccount:
             annotations: !Sub |
-              eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS::AccountId}:role/VaultIAMRole-${PsuedoRandom.GroupId}"
+              eks.amazonaws.com/role-arn: "arn:aws:iam::${AWS::AccountId}:role/VaultUnsealIAMRole-${PsuedoRandom.GroupId}"
           extraEnvironmentVars: # for 1.4.3 no auto assigned name
             AWS_ROLE_SESSION_NAME: some_name
           ha:
@@ -246,10 +289,9 @@ Resources:
           - get
           - list
           - create 
-      - ResourceName: booter-vault
+      - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultServiceAccount:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -266,7 +308,7 @@ Resources:
             eks.amazonaws.com/role-arn: arn:aws:iam::${AWS::AccountId}:role/${RoleName}
           name: ${ResourceName}
           namespace: ${NameSpace}
-      - ResourceName: booter-vault
+      - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
         RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
@@ -303,15 +345,12 @@ Resources:
                   value: ${S3ScriptURL}
                 - name: VAULT_SECRET
                   value: ${VaultSecret}
-                - name: AWS_REGION
-                  value: ${AWS::Region}
               serviceAccountName: ${ResourceName}
               restartPolicy: Never
           backoffLimit: 4
-      - ResourceName: booter-vault
+      - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultClusterRoleBinding:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -332,12 +371,11 @@ Resources:
         - kind: ServiceAccount
           name: ${ResourceName}
           namespace: ${NameSpace}
-      - ResourceName: booter-vault
+      - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
         S3ScriptURL: !Ref BootStrapScriptS3URI
-        RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
-#Outputs:
-#  HashicorpVaultReleaseName:
-#    Value: !Ref HashicorpVaultHelmChart
+Outputs:
+  HashicorpVaultReleaseName:
+    Value: !Ref HashicorpVaultHelmChart
 
 
