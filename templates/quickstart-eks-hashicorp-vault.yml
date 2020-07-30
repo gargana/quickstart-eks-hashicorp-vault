@@ -20,11 +20,39 @@ Parameters:
     Description: Amazon EKS cluster OIDC provider. (Without the protocol e.g. oidc.eks.us-east-1.amazonaws.com/id/SADFASFFASFXCCVXCVSDFSDF)
   Nodes:
     Type: Number
-    Default: "5"
+    Default: "3"
     AllowedValues:
-      - "5"
-      - "7"
-      - "9"
+      - "3"
+    Description: The number of Vault server nodes.
+  VPCID:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC in which the Amazon EKS cluster is deployed.
+  LoadBalancerType:
+    Type: String
+    Default: "Internal"
+    Description: Specify if the load balancer for HashiCorp Vault is internal or external.
+    AllowedValues:
+      - "Internal"
+      - "External"
+  AccessCIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
+    Description: 'The CIDR IP range that is permitted to access Vault Note: A value
+      of 0.0.0.0/0 allows access from ANY IP address.'
+    Type: String
+  DomainName:
+    Type: String
+    Description: Fully qualified domain name for the HashiCorp Vault load balancer.
+      If you don't provide a value for ACMSSLCertificateArn, use the HostedZoneID.
+    MaxLength: 128
+    Default: ""
+  HostedZoneID:
+    Type: String
+    Description: Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start creates the ACM certificate for you using HostedZoneID in conjunction with DomainName.
+    Default: ""
+  ACMSSLCertificateArn:
+    Description: Amazon Resource Name (ARN) of the load balancer's SSL certificate. If you don't provide values for DomainName and HostedZoneID, provide a value for ACMSSLCertificateArn.
+    Type: String
+    Default: ""
   QSS3BucketName:
     AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
     ConstraintDescription: Quick Start bucket name can include numbers, lowercase
@@ -48,12 +76,20 @@ Parameters:
       can include numbers, lowercase letters, uppercase letters, hyphens (-), and
       forward slash (/).
     Type: String
-#Mappings:
-#  VaultVersions:
-#    Vault1.4: https://github.com/hashicorp/vault-helm/archive/v0.5.0.tar.gz
 Conditions:
-  # TODO: Create Node Group condition 
-  CreateCluster: !Equals [ !Ref ClusterName, "" ]
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
+  InternalLoadBalancer: !Equals [!Ref LoadBalancerType, 'Internal']
+  CustomDns: !Not [!Equals [!Ref DomainName, '']]
+  HostedZoneExists: !Not [!Equals [!Ref HostedZoneID, '']]
+  CreateDns: !And
+    - !Not
+      - !Equals
+        - !Ref 'HostedZoneID'
+        - ''
+    - !Not
+      - !Equals
+        - !Ref 'DomainName'
+        - ''
 Resources:
   #EKSNodeGroup:
   # TODO: Nodegroup create with Labels only for Vault other stuff is dissallowed
@@ -68,6 +104,55 @@ Resources:
   #    Additional Expose AdminRoleArn (Expose)
   #    AutoScaler enabled for the EKS Cluster
   #    ProvisionBastionHost: disabled (Expose)
+
+  ACMCertificate:
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W9196
+            - W9197
+            - W9198
+            - W9199
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateDns
+    Properties:
+      TemplateURL:
+        !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-aws-acm-certificate/templates/quickstart-aws-acm-certificate.template.yml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3BucketRegion: !Ref QSS3BucketRegion
+        QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-aws-acm-certificate/
+        DomainName: !Ref DomainName
+        HostedZoneID: !Ref HostedZoneID
+
+
+  VaultSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enables SSH access from the Bastion servers.
+      VpcId: !Ref VPCID
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref AccessCIDR
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref AccessCIDR
+
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Join:
+              - "-"
+              - - Ref: AWS::StackName
+                - VaultSecGroup
+
   PsuedoRandom:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -242,9 +327,16 @@ Resources:
       # TODO: Add kubernetes service role
       ValueYaml: !Sub
       - |
-        # ${SomeValue}
         ui:
           enabled: true
+          serviceType: "LoadBalancer"
+          annotations: |
+            service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${SSLCertificate}
+            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+            service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+            ${IsInternalLoadBalancer}
+            ${ExternalName}
+            ${TTL}
         server:
           image:
             repository: "vault"
@@ -280,7 +372,14 @@ Resources:
                   region     = "${AWS::Region}"
                   kms_key_id = "${VaultKmsKey}"
                 }
-      - SomeValue: "test"
+      - SSLCertificate: !If [ CreateDns, !GetAtt "ACMCertificate.Outputs.ACMCertificate", !Ref "ACMSSLCertificateArn" ]
+        IsInternalLoadBalancer: !If [ InternalLoadBalancer , 'service.beta.kubernetes.io/aws-load-balancer-internal: "true"', "" ]
+        QuotedDomainName: !Sub "'${DomainName}'"
+        SecurityGroups: !Sub "service.beta.kubernetes.io/aws-load-balancer-extra-security-groups: ${VaultSecurityGroup}"
+        #DNSSAN: !If [ CreateDns, !Sub 'serverAdditionalDNSSANs: ["${QuotedDomainName}"]', ""]
+        ExternalName: !If [ CreateDns, !Sub '"external-dns.alpha.kubernetes.io/hostname": "${DomainName}"', "" ]
+        TTL: '"external-dns.alpha.kubernetes.io/ttl": "30"'
+
   VaultClusterRole:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -391,8 +490,27 @@ Resources:
           namespace: ${NameSpace}
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
+  GetELBDetail:
+    DependsOn: HashicorpVaultHelmChart
+    Type: "AWSQS::Kubernetes::Get"
+    Properties:
+      ClusterName: !Ref "ClusterName"
+      Name: !Sub "service/vault-${PsuedoRandom.GroupId}-ui"
+      Namespace: !Ref "KubernetesNameSpace"
+      JsonPath: "{.status.loadBalancer.ingress[0].hostname}"
 Outputs:
   HashicorpVaultReleaseName:
     Value: !Sub "vault-${PsuedoRandom.GroupId}"
+  VaultLoadBalancer:
+    Value:
+      !Sub
+      - "https://${DNSAddress}/"
+      - DNSAddress: !If [ CustomDns, !Ref DomainName, !Ref "GetELBDetail" ]
+  VaultSecret:
+    Value: !Ref "VaultSecret"
+    Description: The AWS Secrets Manager Secret containing the ROOT TOKEN and Recovery Secret for HashiCorp Vault.
+  VaultKMSKeyArn:
+    Value: !GetAtt "VaultKmsKey.Arn"
+    Description: The AWS KMS Key used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
 
 
