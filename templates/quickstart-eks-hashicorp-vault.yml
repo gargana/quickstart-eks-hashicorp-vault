@@ -498,6 +498,25 @@ Resources:
       Name: !Sub "service/vault-${PsuedoRandom.GroupId}-ui"
       Namespace: !Ref "KubernetesNameSpace"
       JsonPath: "{.status.loadBalancer.ingress[0].hostname}"
+  GetELBHostedZone:
+    Type: Custom::GetELBHostedZone
+    Properties:
+      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
+      AwsCliCommand: !Sub
+      - "elb describe-load-balancers --load-balancer-names ${elbname} --query 'LoadBalancerDescriptions[0].{HostedZoneId:CanonicalHostedZoneNameID}'"
+      - elbname: !Select [ 0, !Split ["-", !Sub "${GetELBDetail.Response}" ] ]
+      IdField: 'HostedZoneId'
+
+  ELBDNSRecord:
+    Condition: CreateDns
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Type: A
+      Name: !Ref "DomainName"
+      AliasTarget:
+        HostedZoneId: !Ref "GetELBHostedZone"
+        DNSName: !Sub "${GetELBDetail.Response}"
+      HostedZoneId: !Ref "HostedZoneID"
 Outputs:
   HashicorpVaultReleaseName:
     Value: !Sub "vault-${PsuedoRandom.GroupId}"
@@ -505,7 +524,7 @@ Outputs:
     Value:
       !Sub
       - "https://${DNSAddress}/"
-      - DNSAddress: !If [ CustomDns, !Ref DomainName, !Ref "GetELBDetail" ]
+      - DNSAddress: !If [ CustomDns, !Ref DomainName, !Sub "${GetELBDetail.Response}" ]
   VaultSecret:
     Value: !Ref "VaultSecret"
     Description: The AWS Secrets Manager Secret containing the ROOT TOKEN and Recovery Secret for HashiCorp Vault.
