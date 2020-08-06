@@ -22,10 +22,17 @@ project:
   - us-east-2
   - us-west-2
   parameters:
+    VaultVersion: "1.5.0"
+    Nodes: "3"
+    VPCID: override
+    AccessCIDR: 0.0.0.0/0
     ClusterName: override
-    ChartURI: override
+    OIDCProvider: override
+    QSS3BucketName: $[taskcat_autobucket]
+    QSS3BucketRegion: $[taskcat_current_region]
+    QSS3KeyPrefix: quickstart-eks-hashicorp-vault/
 tests:
-  single-region:
+  vault-eks-single:
     regions:
-     - us-east-2
+    - eu-west-1
     template: templates/quickstart-eks-hashicorp-vault.yml
