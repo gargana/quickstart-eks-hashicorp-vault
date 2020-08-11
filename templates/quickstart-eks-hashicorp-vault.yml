@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Deploys the Hashicorp Vault helm chart into a Kubernetes cluster (qp-1qmcrhdml)"
+Description: "Deploys the Hashicorp Vault helm chart into a Kubernetes cluster (qs-1qmcrhdml)"
 Metadata:
   QSLint:
     Exclusions: [W9002, W9003, W9004, W9006]
@@ -329,14 +329,16 @@ Resources:
       - |
         ui:
           enabled: true
+          externalPort: 443
           serviceType: "LoadBalancer"
           annotations: |
             service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${SSLCertificate}
             service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
-            service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
-            ${IsInternalLoadBalancer}
+            service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,8200"
+            service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/ui/"
             ${ExternalName}
             ${TTL}
+            ${IsInternalLoadBalancer}
         server:
           image:
             repository: "vault"
