@@ -1,7 +1,10 @@
 #!/bin/bash
 VAULT_NUMBER_OF_KEYS_FOR_UNSEAL=3
 VAULT_NUMBER_OF_KEYS=5
-SLEEP_SECONDS=90
+SLEEP_SECONDS=15
+PROTOCOL=http
+VAULT_PORT=8200
+VAULT_0=vault-${RELEASE_NAME}-0.vault-${RELEASE_NAME}-internal
 
 get_secret () {
     local value=$(aws secretsmanager --region ${AWS_REGION} get-secret-value --secret-id "$1" | jq --raw-output .SecretString)
@@ -22,29 +25,31 @@ aws sts get-caller-identity
 curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
-kubectl version --short --client 
+kubectl version --short --client
 
-while true; do
-  IP_ADDRESS=$(kubectl get pods vault-${RELEASE_NAME}-0 -o jsonpath={.status.podIP})
-  if [ "${IP_ADDRESS}X" == "X" ]
-  then
-    sleep 1
-  else
-    break
-  fi
-done
+#while true; do
+#  IP_ADDRESS=$(kubectl get pods vault-${RELEASE_NAME}-0 -o jsonpath={.status.podIP})
+#  if [ "${IP_ADDRESS}X" == "X" ]
+#  then
+#    sleep 1
+#  else
+#    break
+#  fi
+#done
 
-until curl -fs -o /dev/null ${IP_ADDRESS}:8200/v1/sys/init; do
+until curl -fs -o /dev/null -k ${PROTOCOL}://${VAULT_0}:8200/v1/sys/init; do
     echo "Waiting for Vault to start..."
     sleep 1
 done
 
 # See if vault is initialized
-init=$(kubectl exec -t vault-${RELEASE_NAME}-0 -- vault operator init -status)
+#init=$(kubectl exec -t vault-${RELEASE_NAME}-0 -- vault operator init -status)
+init=$(curl ${PROTOCOL}://${VAULT_0}:8200/v1/sys/init | jq -r ".initialised")
 
 echo "Is vault initialized: '${init}'"
 
-if [ "$init" != "Vault is initialized" ]; then
+#if [ "$init" != "Vault is initialized" ]; then
+if [ "$init" != "false" ]; then
     echo "Initializing Vault"
     SECRET_VALUE=$(kubectl exec vault-${RELEASE_NAME}-0 -- vault operator init -recovery-shares=${VAULT_NUMBER_OF_KEYS} -recovery-threshold=${VAULT_NUMBER_OF_KEYS_FOR_UNSEAL})
     echo "storing vault init values in secrets manager"
@@ -53,7 +58,7 @@ else
     echo "Vault is already initialized"
 fi
 
-sealed=$(curl -fs ${IP_ADDRESS}:8200/v1/sys/seal-status | jq -r .sealed)
+sealed=$(curl -fs -k ${PROTOCOL}://${VAULT_0}:8200/v1/sys/seal-status | jq -r .sealed)
 
 # Should Auto unseal using KMS but this is for demonstration for manual unseal
 if [ "$sealed" == "true" ]; then
@@ -81,9 +86,9 @@ root_token=$(echo ${VAULT_SECRET_VALUE} | awk '{ if (match($0,/Initial Root Toke
 kubectl exec vault-${RELEASE_NAME}-0 -- vault login token=$root_token 2>&1 > /dev/null  # Hide this output from the console
 
 # Join other pods to the raft cluster
-kubectl exec -t vault-${RELEASE_NAME}-1 -- vault operator raft join http://vault-${RELEASE_NAME}-0.vault-${RELEASE_NAME}-internal:8200
+kubectl exec -t vault-${RELEASE_NAME}-1 -- vault operator raft join ${PROTOCOL}://${VAULT_0}:${VAULT_PORT}
 
-kubectl exec -t vault-${RELEASE_NAME}-2 -- vault operator raft join http://vault-${RELEASE_NAME}-0.vault-${RELEASE_NAME}-internal:8200
+kubectl exec -t vault-${RELEASE_NAME}-2 -- vault operator raft join ${PROTOCOL}://${VAULT_0}:${VAULT_PORT}
 
 # Show who we have joined
 kubectl exec -t vault-${RELEASE_NAME}-0 -- vault operator raft list-peers
