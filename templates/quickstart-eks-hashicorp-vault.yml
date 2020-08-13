@@ -13,7 +13,7 @@ Parameters:
     AllowedValues: 
     - "1.5.0"
   KubernetesNameSpace:
-    Default: default
+    Default: "default"
     Type: String
   OIDCProvider:
     Type: String
@@ -104,7 +104,6 @@ Resources:
   #    Additional Expose AdminRoleArn (Expose)
   #    AutoScaler enabled for the EKS Cluster
   #    ProvisionBastionHost: disabled (Expose)
-
   ACMCertificate:
     Metadata:
       cfn-lint:
@@ -128,8 +127,6 @@ Resources:
         QSS3KeyPrefix: !Sub ${QSS3KeyPrefix}submodules/quickstart-aws-acm-certificate/
         DomainName: !Ref DomainName
         HostedZoneID: !Ref HostedZoneID
-
-
   VaultSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -144,7 +141,6 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: !Ref AccessCIDR
-
       Tags:
         - Key: Name
           Value:
@@ -152,7 +148,6 @@ Resources:
               - "-"
               - - Ref: AWS::StackName
                 - VaultSecGroup
-
   PsuedoRandom:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -324,13 +319,16 @@ Resources:
       Namespace: !Ref KubernetesNameSpace
       Name: !Sub "vault-${PsuedoRandom.GroupId}"
       Chart: hashicorp/vault
-      # TODO: Add kubernetes service role
       ValueYaml: !Sub
       - |
+        global:
+          tlsDisable: true
         ui:
           enabled: true
           externalPort: 443
           serviceType: "LoadBalancer"
+          loadBalancerSourceRanges:
+          - ${AccessCIDR}
           annotations: |
             service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${SSLCertificate}
             service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
@@ -381,7 +379,6 @@ Resources:
         #DNSSAN: !If [ CreateDns, !Sub 'serverAdditionalDNSSANs: ["${QuotedDomainName}"]', ""]
         ExternalName: !If [ CreateDns, !Sub '"external-dns.alpha.kubernetes.io/hostname": "${DomainName}"', "" ]
         TTL: '"external-dns.alpha.kubernetes.io/ttl": "30"'
-
   VaultClusterRole:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -409,7 +406,6 @@ Resources:
           - create 
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
-
   VaultServiceAccount:
     Type: "AWSQS::Kubernetes::Resource"
     Properties:
@@ -431,6 +427,7 @@ Resources:
         RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultInitialisationJob:
     Type: "AWSQS::Kubernetes::Resource"
+    DependsOn: ACMCertificate
     Properties:
       ClusterName: !Ref ClusterName
       Namespace: !Ref KubernetesNameSpace
@@ -508,7 +505,6 @@ Resources:
       - "elb describe-load-balancers --load-balancer-names ${elbname} --query 'LoadBalancerDescriptions[0].{HostedZoneId:CanonicalHostedZoneNameID}'"
       - elbname: !Select [ 0, !Split ["-", !Sub "${GetELBDetail.Response}" ] ]
       IdField: 'HostedZoneId'
-
   ELBDNSRecord:
     Condition: CreateDns
     Type: AWS::Route53::RecordSet
@@ -533,5 +529,3 @@ Outputs:
   VaultKMSKeyArn:
     Value: !GetAtt "VaultKmsKey.Arn"
     Description: The AWS KMS Key used to Auto Unseal HashiCorp Vault and encrypt the ROOT TOKEN and Recovery Secret.
-
-
