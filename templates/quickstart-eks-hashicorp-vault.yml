@@ -334,7 +334,7 @@ Resources:
       ValueYaml: !Sub
       - |
         global:
-          tlsDisable: true
+          tlsDisable: false
         ui:
           enabled: true
           externalPort: 443
@@ -343,7 +343,7 @@ Resources:
           - ${AccessCIDR}
           annotations: |
             service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${SSLCertificate}
-            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: https
             service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,8200"
             service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/ui/"
             ${ExternalName}
@@ -352,11 +352,9 @@ Resources:
         server:
           extraEnvironmentVars:
             VAULT_CACERT: /vault/userconfig/vault-server-tls/vault.ca
-
           extraVolumes:
           - type: secret
             name: vault-server-tls
-
           image:
             repository: "vault"
             tag: ${VaultVersion}
@@ -484,7 +482,7 @@ Resources:
                 args:
                 - >
                   sleep 15;
-                  yum install -y awscli;
+                  yum install -y awscli 2>&1 > /dev/null;
                   export AWS_REGION=${AWS::Region};
                   export RELEASE_NAME=${ReleaseName};
                   aws sts get-caller-identity;
@@ -529,7 +527,7 @@ Resources:
                     yum install -y awscli;
                     export AWS_REGION=${AWS::Region};
                     export RELEASE_NAME=${ReleaseName};
-                    export NAME_SPACE=${NameSpace};
+                    export NAMESPACE=${NameSpace};
                     aws sts get-caller-identity;
                     aws s3 cp ${!S3_SCRIPT_URL} ./script.sh &&
                     chmod +x ./script.sh &&
@@ -578,7 +576,7 @@ Resources:
       Name: !Sub "service/vault-${PsuedoRandom.GroupId}-ui"
       Namespace: !Ref "KubernetesNameSpace"
       JsonPath: "{.status.loadBalancer.ingress[0].hostname}"
-#  GetELBHostedZone:
+#  GetKubernetesCA:
 #    Type: Custom::GetELBHostedZone
 #    Properties:
 #      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
