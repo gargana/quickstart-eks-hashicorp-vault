@@ -13,7 +13,7 @@ Parameters:
     AllowedValues: 
     - "1.5.0"
   KubernetesNameSpace:
-    Default: "default"
+    Default: "vault-server"
     Type: String
   OIDCProvider:
     Type: String
@@ -311,8 +311,20 @@ Resources:
       Description: "Vault Root/Recovery key"
       KmsKeyId: !Ref VaultKmsKey 
       SecretString: "empty"
+  VaultNameSpace:
+    Type: "AWSQS::Kubernetes::Resource"
+    Properties:
+      ClusterName: !Ref ClusterName
+      Manifest: !Sub
+      - |
+        kind: Namespace
+        apiVersion: v1
+        metadata:
+          name: ${Namespace}
+      - Namespace: !Ref KubernetesNameSpace
   HashicorpVaultHelmChart:
     Type: "AWSQS::Kubernetes::Helm"
+    DependsOn: [ VaultCertificatesJob ]
     Properties:
       ClusterID: !Ref ClusterName
       Repository: https://helm.releases.hashicorp.com
@@ -322,7 +334,7 @@ Resources:
       ValueYaml: !Sub
       - |
         global:
-          tlsDisable: true
+          tlsDisable: false
         ui:
           enabled: true
           externalPort: 443
@@ -331,13 +343,18 @@ Resources:
           - ${AccessCIDR}
           annotations: |
             service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${SSLCertificate}
-            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: https
             service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,8200"
             service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/ui/"
             ${ExternalName}
             ${TTL}
             ${IsInternalLoadBalancer}
         server:
+          extraEnvironmentVars:
+            VAULT_CACERT: /vault/userconfig/vault-server-tls/vault.ca
+          extraVolumes:
+          - type: secret
+            name: vault-server-tls
           image:
             repository: "vault"
             tag: ${VaultVersion}
@@ -357,7 +374,10 @@ Resources:
                 ui = true
 
                 listener "tcp" {
-                  tls_disable = 1
+                  tls_disable = 0
+                  tls_cert_file = "/vault/userconfig/vault-server-tls/vault.crt"
+                  tls_key_file  = "/vault/userconfig/vault-server-tls/vault.key"
+                  tls_client_ca_file = "/vault/userconfig/vault-server-tls/vault.ca"
                   address = "[::]:8200"
                   cluster_address = "[::]:8201"
                 }
@@ -381,6 +401,7 @@ Resources:
         TTL: '"external-dns.alpha.kubernetes.io/ttl": "30"'
   VaultClusterRole:
     Type: "AWSQS::Kubernetes::Resource"
+    DependsOn: VaultNameSpace
     Properties:
       ClusterName: !Ref ClusterName
       Namespace: !Ref KubernetesNameSpace
@@ -400,14 +421,27 @@ Resources:
           - pods/exec
           - pods
           - pods/log
+          - secrets
+          - tmp/secrets
           verbs:
           - get
           - list
-          - create 
+          - create
+        - apiGroups:
+          - "certificates.k8s.io"
+          resources:
+          - "certificatesigningrequests"
+          - "certificatesigningrequests/approval"
+          verbs:
+          - update
+          - get
+          - list
+          - create
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
         NameSpace: !Ref KubernetesNameSpace
   VaultServiceAccount:
     Type: "AWSQS::Kubernetes::Resource"
+    DependsOn: [ VaultNameSpace, VaultClusterRole ]
     Properties:
       ClusterName: !Ref ClusterName
       Namespace: !Ref KubernetesNameSpace
@@ -427,7 +461,7 @@ Resources:
         RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultInitialisationJob:
     Type: "AWSQS::Kubernetes::Resource"
-    DependsOn: ACMCertificate
+    DependsOn: [ ACMCertificate, VaultClusterRoleBinding ]
     Properties:
       ClusterName: !Ref ClusterName
       Namespace: !Ref KubernetesNameSpace
@@ -448,7 +482,7 @@ Resources:
                 args:
                 - >
                   sleep 15;
-                  yum install -y awscli;
+                  yum install -y awscli 2>&1 > /dev/null;
                   export AWS_REGION=${AWS::Region};
                   export RELEASE_NAME=${ReleaseName};
                   aws sts get-caller-identity;
@@ -467,8 +501,53 @@ Resources:
         NameSpace: !Ref KubernetesNameSpace
         ReleaseName: !Sub "${PsuedoRandom.GroupId}"
         S3ScriptURL: !Sub "s3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/bootstrap.sh"
+  VaultCertificatesJob:
+    Type: "AWSQS::Kubernetes::Resource"
+    DependsOn: [ VaultNameSpace, VaultClusterRoleBinding ]
+    Properties:
+      ClusterName: !Ref ClusterName
+      Namespace: !Ref KubernetesNameSpace
+      Manifest: !Sub
+        - |
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: ${ResourceName}
+            namespace: ${NameSpace}
+          spec:
+            template:
+              spec:
+                containers:
+                - name: ${ResourceName}
+                  image: amazonlinux
+                  command: ["/bin/bash","-c"]
+                  args:
+                  - >
+                    sleep 15;
+                    yum install -y awscli;
+                    export AWS_REGION=${AWS::Region};
+                    export RELEASE_NAME=${ReleaseName};
+                    export NAMESPACE=${NameSpace};
+                    aws sts get-caller-identity;
+                    aws s3 cp ${!S3_SCRIPT_URL} ./script.sh &&
+                    chmod +x ./script.sh &&
+                    ./script.sh
+                  env:
+                  - name: S3_SCRIPT_URL
+                    value: ${S3ScriptURL}
+                  - name: NAME_SPACE
+                    value: ${NameSpace}
+                serviceAccountName: ${ServiceAccount}
+                restartPolicy: Never
+            backoffLimit: 4
+        - ResourceName: !Sub "certificate-vault-${PsuedoRandom.GroupId}"
+          ServiceAccount: !Sub "boot-vault-${PsuedoRandom.GroupId}"
+          NameSpace: !Ref KubernetesNameSpace
+          ReleaseName: !Sub "${PsuedoRandom.GroupId}"
+          S3ScriptURL: !Sub "s3://${QSS3BucketName}/${QSS3KeyPrefix}scripts/certificates.sh"
   VaultClusterRoleBinding:
     Type: "AWSQS::Kubernetes::Resource"
+    DependsOn: [ VaultNameSpace, VaultRole, VaultClusterRole, VaultServiceAccount ]
     Properties:
       ClusterName: !Ref ClusterName
       Manifest: !Sub
@@ -497,6 +576,14 @@ Resources:
       Name: !Sub "service/vault-${PsuedoRandom.GroupId}-ui"
       Namespace: !Ref "KubernetesNameSpace"
       JsonPath: "{.status.loadBalancer.ingress[0].hostname}"
+#  GetKubernetesCA:
+#    Type: Custom::GetELBHostedZone
+#    Properties:
+#      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
+#      AwsCliCommand: !Sub
+#      - "eks describe-cluster --name ${ClusterName} --query cluster.certificateAuthority.data --output text"
+#      - elbname: !Select [ 0, !Split ["-", !Sub "${GetELBDetail.Response}" ] ]
+#      IdField: 'HostedZoneId'
   GetELBHostedZone:
     Type: Custom::GetELBHostedZone
     Properties:
