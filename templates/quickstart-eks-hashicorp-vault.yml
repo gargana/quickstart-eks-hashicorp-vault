@@ -7,26 +7,38 @@ Parameters:
   ClusterName:
     Type: String
     Description: Amazon EKS Cluster
+  KeyPairName:
+    Type: "AWS::EC2::KeyPair::KeyName"
+  PrivateSubnet1ID:
+    Type: "AWS::EC2::Subnet::Id"
+  PrivateSubnet2ID:
+    Type: "AWS::EC2::Subnet::Id"
+  PrivateSubnet3ID:
+    Type: "AWS::EC2::Subnet::Id"
   VaultVersion:
     Type: String
     Default: "1.5.0"
     AllowedValues: 
     - "1.5.0"
+  VaultDeploymentSize:
+    Type: String
+    Default: "small"
+    AllowedValues:
+      - "small"
+      - "medium"
+      - "large"
   KubernetesNameSpace:
     Default: "vault-server"
     Type: String
-  OIDCProvider:
-    Type: String
-    Description: Amazon EKS cluster OIDC provider. (Without the protocol e.g. oidc.eks.us-east-1.amazonaws.com/id/SADFASFFASFXCCVXCVSDFSDF)
   Nodes:
     Type: Number
     Default: "3"
     AllowedValues:
       - "3"
     Description: The number of Vault server nodes.
-  VPCID:
-    Type: AWS::EC2::VPC::Id
-    Description: VPC in which the Amazon EKS cluster is deployed.
+  HttpProxy:
+    Type: String
+    Default: ""
   LoadBalancerType:
     Type: String
     Default: "Internal"
@@ -90,20 +102,107 @@ Conditions:
       - !Equals
         - !Ref 'DomainName'
         - ''
+Mappings:
+  Scaling:
+    small:
+      InstanceType: "m5.large"
+      VolumeSize: "25"
+    medium:
+      InstanceType: "m5.xlarge"
+      VolumeSize: "50"
+    large:
+      InstanceType: "m5.2xlarge"
+      VolumeSize: "50"
 Resources:
-  #EKSNodeGroup:
-  # TODO: Nodegroup create with Labels only for Vault other stuff is dissallowed
-  #  Type: AWSQS::EKS::ClusterNodeGroup 
-  #  Condition: CreateCluster
-  #    3 Node minimum (Expose)
-  #    EKS Cluster Node size - m5.large (Expose)
-  #    Private EKS Cluster 3 AZ
-  #    AccessCidr - Disabled or Private (Expose)
-  #    CloudWatch - Logging by Default (Expose)
-  #    Additional Expose AdminUserArn (Expose)
-  #    Additional Expose AdminRoleArn (Expose)
-  #    AutoScaler enabled for the EKS Cluster
-  #    ProvisionBastionHost: disabled (Expose)
+  GetClusterVPCID:
+    Type: Custom::GetClusterVPCID
+    Properties:
+      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
+      AwsCliCommand: !Sub "eks describe-cluster --name ${ClusterName} --query 'cluster.resourcesVpcConfig.{vpcId:vpcId}'"
+      IdField: 'vpcId'
+  GetClusterSecurityGroupId:
+    Type: Custom::GetClusterSecurityGroupId
+    Properties:
+      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
+      AwsCliCommand: !Sub "eks describe-cluster --name ${ClusterName} --query 'cluster.resourcesVpcConfig.{clusterSecurityGroupId:clusterSecurityGroupId}'"
+      IdField: 'clusterSecurityGroupId'
+  GetClusterKubernetesVersion:
+    Type: Custom::GetClusterKubernetesVersion
+    Properties:
+      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
+      AwsCliCommand: !Sub "eks describe-cluster --name ${ClusterName} --query 'cluster.{version:version}'"
+      IdField: 'version'
+  GetOIDCProvider:
+    Type: Custom::GetOIDCProvider
+    Properties:
+      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
+      AwsCliCommand: !Sub "eks describe-cluster --name ${ClusterName} --query 'cluster.identity.oidc.{issuer:issuer}'"
+      IdField: 'issuer'
+  # TODO: These should be global once per account from v3.
+  NodeInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref NodeInstanceRole
+  NodeInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: !Sub "ec2.${AWS::URLSuffix}"
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonElasticFileSystemReadOnlyAccess'
+      Policies:
+        - PolicyName: QSBucketAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub
+                  - "arn:${AWS::Partition}:s3:::${BucketName}/${QSS3KeyPrefix}*"
+                  - BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+  VaultNodeGroup:
+    # TODO: Nodegroup create with Labels only for Vault other stuff is dissallowed - https://learn.hashicorp.com/tutorials/vault/kubernetes-reference-architecture
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub
+        - 'https://${S3Bucket}.s3.${S3Region}.${AWS::URLSuffix}/${QSS3KeyPrefix}submodules/quickstart-amazon-eks-nodegroup/templates/amazon-eks-nodegroup.template.yaml'
+        - S3Region: !If [UsingDefaultBucket, !Ref 'AWS::Region', !Ref QSS3BucketRegion]
+          S3Bucket: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
+      Parameters:
+        HttpProxy: !Ref HttpProxy
+        KeyPairName: !Ref 'KeyPairName'
+        # TODO: Get from existing VPC rather than have as paramters
+        PrivateSubnet1ID: !Ref PrivateSubnet1ID
+        PrivateSubnet2ID: !Ref PrivateSubnet2ID
+        PrivateSubnet3ID: !Ref PrivateSubnet3ID
+        VPCID: !Ref GetClusterVPCID
+        NodeInstanceType: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "InstanceType" ]
+        NumberOfNodes: !Ref Nodes
+        MaxNumberOfNodes: !Ref Nodes
+        NodeGroupName: !Sub "Vault-Server-${PsuedoRandom.GroupId}"
+        NodeVolumeSize: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "VolumeSize" ]
+        ManagedNodeGroup: "no"
+        EKSControlPlane: !Ref ClusterName
+        ControlPlaneSecurityGroup: !Ref GetClusterSecurityGroupId
+        NodeInstanceProfile: !Ref NodeInstanceProfile
+        NodeInstanceRoleName: !Ref NodeInstanceRole
+        NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
+        KubernetesVersion: !Ref GetClusterKubernetesVersion
+        QSS3BucketName: !Ref QSS3BucketName
+        QSS3KeyPrefix: !Sub "${QSS3KeyPrefix}submodules/quickstart-amazon-eks-nodegroup/"
+        QSS3BucketRegion: !Ref QSS3BucketRegion
   ACMCertificate:
     Metadata:
       cfn-lint:
@@ -131,7 +230,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enables SSH access from the Bastion servers.
-      VpcId: !Ref VPCID
+      VpcId: !Ref GetClusterVPCID
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -177,6 +276,12 @@ Resources:
         }
       - NameSpace: !Ref KubernetesNameSpace
         ResourceName: vault
+        # https://oidc.eks.eu-west-1.amazonaws.com/id/8371C1E71D49834A7595BB4D1850E140
+        OIDCProvider: !Sub
+        - "${OIDCProvider1}/${OIDCProvider2}/${OIDCProvider3}"
+        - OIDCProvider1: !Select [ 2, !Split [ "/", !Ref GetOIDCProvider ] ]
+          OIDCProvider2: !Select [ 3, !Split [ "/", !Ref GetOIDCProvider ] ]
+          OIDCProvider3: !Select [ 4, !Split [ "/", !Ref GetOIDCProvider ] ]
       Path: "/"
       Policies:
       - PolicyName: root
@@ -216,6 +321,12 @@ Resources:
         }
       - NameSpace: !Ref KubernetesNameSpace
         ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
+        # https://oidc.eks.eu-west-1.amazonaws.com/id/8371C1E71D49834A7595BB4D1850E140
+        OIDCProvider: !Sub
+        - "${OIDCProvider1}/${OIDCProvider2}/${OIDCProvider3}"
+        - OIDCProvider1: !Select [ 2, !Split [ "/", !Ref GetOIDCProvider ] ]
+          OIDCProvider2: !Select [ 3, !Split [ "/", !Ref GetOIDCProvider ] ]
+          OIDCProvider3: !Select [ 4, !Split [ "/", !Ref GetOIDCProvider ] ]
       Path: "/"
       Policies:
       - PolicyName: root
@@ -324,7 +435,7 @@ Resources:
       - Namespace: !Ref KubernetesNameSpace
   HashicorpVaultHelmChart:
     Type: "AWSQS::Kubernetes::Helm"
-    DependsOn: [ VaultCertificatesJob ]
+    DependsOn: [ VaultNodeGroup, VaultCertificatesJob ]
     Properties:
       ClusterID: !Ref ClusterName
       Repository: https://helm.releases.hashicorp.com
@@ -576,14 +687,6 @@ Resources:
       Name: !Sub "service/vault-${PsuedoRandom.GroupId}-ui"
       Namespace: !Ref "KubernetesNameSpace"
       JsonPath: "{.status.loadBalancer.ingress[0].hostname}"
-#  GetKubernetesCA:
-#    Type: Custom::GetELBHostedZone
-#    Properties:
-#      ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
-#      AwsCliCommand: !Sub
-#      - "eks describe-cluster --name ${ClusterName} --query cluster.certificateAuthority.data --output text"
-#      - elbname: !Select [ 0, !Split ["-", !Sub "${GetELBDetail.Response}" ] ]
-#      IdField: 'HostedZoneId'
   GetELBHostedZone:
     Type: Custom::GetELBHostedZone
     Properties:
