@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Deploys the Hashicorp Vault helm chart into a Kubernetes cluster (qs-1qmcrhdml)"
+Description: "Deploys the HashiCorp Vault helm chart into a Kubernetes cluster (qs-1qmcrhdml)"
 Metadata:
   QSLint:
     Exclusions: [W9002, W9003, W9004, W9006]
@@ -193,7 +193,7 @@ Resources:
         MaxNumberOfNodes: !Ref Nodes
         NodeGroupName: !Sub "Vault-Server-${PsuedoRandom.GroupId}"
         NodeVolumeSize: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "VolumeSize" ]
-        ManagedNodeGroup: "no"
+        ManagedNodeGroup: "yes"
         EKSControlPlane: !Ref ClusterName
         ControlPlaneSecurityGroup: !Ref GetClusterSecurityGroupId
         NodeInstanceProfile: !Ref NodeInstanceProfile
@@ -461,6 +461,8 @@ Resources:
             ${TTL}
             ${IsInternalLoadBalancer}
         server:
+          nodeSelector: |
+            Value: ${ClusterName}-Vault-Server-${PsuedoRandom.GroupId}-Node
           extraEnvironmentVars:
             VAULT_CACERT: /vault/userconfig/vault-server-tls/vault.ca
           extraVolumes:
