@@ -2,3 +2,7 @@
 	path = submodules/quickstart-aws-acm-certificate
 	url = git@github.com:aws-quickstart/quickstart-aws-acm-certificate.git
 	branch = master
+[submodule "submodules/quickstart-amazon-eks-nodegroup"]
+	path = submodules/quickstart-amazon-eks-nodegroup
+	url = git@github.com:aws-quickstart/quickstart-amazon-eks-nodegroup.git
+	branch = main
