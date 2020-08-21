@@ -5,7 +5,7 @@
 > practices. 
 
 ## Overview
-This Quick Start is based off of the [Amazon EKS Quick Start](https://github.com/aws-quickstart/quickstart-amazon-eks) which provides the underlying Kubernetes infrastructure. 
+This Quick Start uses the [Amazon EKS Quick Start](https://github.com/aws-quickstart/quickstart-amazon-eks) to provide the underlying Kubernetes infrastructure. 
 
 ## Architecture Diagram
 ![Vault architecture diagram](docs/images/architecture.png)
