@@ -24,7 +24,7 @@ Metadata:
         - KubernetesNameSpace
         - LoadBalancerType
         - DomainName
-        - HostedZoneId
+        - HostedZoneID
         - ACMSSLCertificateArn
         - Nodes
       - Label:
