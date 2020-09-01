@@ -574,7 +574,7 @@ Resources:
         RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultInitialisationJob:
     Type: "AWSQS::Kubernetes::Resource"
-    DependsOn: [ ACMCertificate, VaultClusterRoleBinding ]
+    DependsOn: [ VaultClusterRoleBinding ]
     Properties:
       ClusterName: !Ref ClusterName
       Namespace: !Ref KubernetesNameSpace
