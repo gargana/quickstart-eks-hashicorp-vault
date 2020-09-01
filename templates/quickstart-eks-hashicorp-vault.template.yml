@@ -13,7 +13,6 @@ Metadata:
           default: Network configuration
         Parameters:
         - AccessCIDR
-        - VPCID
         - PrivateSubnet1ID
         - PrivateSubnet2ID
         - PrivateSubnet3ID
@@ -27,6 +26,7 @@ Metadata:
         - DomainName
         - HostedZoneId
         - ACMSSLCertificateArn
+        - Nodes
       - Label:
           default: Quick Start Configuration
         Parameters:
@@ -44,8 +44,6 @@ Metadata:
         default: Quick Start S3 bucket Region
       AccessCIDR:
         default: Permitted IP range
-      VPCID:
-        default: VPC ID
       PrivateSubnet1ID:
         default: First subnet ID for Auto Scaling group
       PrivateSubnet2ID:
@@ -64,6 +62,8 @@ Metadata:
         default: HashiCorp Vault version
       VaultDeploymentSize:
         default: HashiCorp Vault deployment size
+      Nodes:
+        default: HashiCorp Vault server nodes
 Parameters:
   ClusterName:
     Type: String
