@@ -74,11 +74,11 @@ root_token=$(echo ${VAULT_SECRET_VALUE} | awk '{ if (match($0,/Initial Root Toke
 kubectl exec vault-${RELEASE_NAME}-0 -- "/bin/sh" "-c" "export VAULT_SKIP_VERIFY=true && vault login token=$root_token 2>&1 > /dev/null"  # Hide this output from the console
 
 # Join other pods to the raft cluster
-# TODO: Make this flexible
+# TODO: Make this flexible for 3 5 7 nodes etc
 kubectl exec -t vault-${RELEASE_NAME}-1 -- "/bin/sh" "-c" "vault operator raft join -tls-skip-verify -leader-ca-cert=\"$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)\" ${PROTOCOL}://${VAULT_0}:${VAULT_PORT}"
 kubectl exec -t vault-${RELEASE_NAME}-2 -- "/bin/sh" "-c" "vault operator raft join -tls-skip-verify -leader-ca-cert=\"$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)\" ${PROTOCOL}://${VAULT_0}:${VAULT_PORT}"
 
 # Show who we have joined
 kubectl exec -t vault-${RELEASE_NAME}-0 -- "/bin/sh" "-c" "export VAULT_SKIP_VERIFY=true && vault operator raft list-peers"
-# If we see 3 raft peers we have succeeded.
-# TODO: Do this validation or exit 1
+# If we see All raft peers we have succeeded in bootstrapping.
+# TODO: Add validation for the number ... currently relying on exit 0 status of kubectl command
