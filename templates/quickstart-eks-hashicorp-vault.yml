@@ -3,6 +3,67 @@ Description: "Deploys the HashiCorp Vault helm chart into a Kubernetes cluster (
 Metadata:
   QSLint:
     Exclusions: [W9002, W9003, W9004, W9006]
+  QuickStartDocumentation:
+    EntrypointName: "Launch into an existing Amazon EKS cluster"
+    OptionalParameters:
+      - HttpProxy
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Network configuration
+        Parameters:
+        - AccessCIDR
+        - VPCID
+        - PrivateSubnet1ID
+        - PrivateSubnet2ID
+        - PrivateSubnet3ID
+      - Label:
+          default: Vault Configuration
+        Parameters:
+        - VaultVersion
+        - VaultDeploymentSize
+        - KubernetesNameSpace
+        - LoadBalancerType
+        - DomainName
+        - HostedZoneId
+        - ACMSSLCertificateArn
+      - Label:
+          default: Quick Start Configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3BucketRegion
+          - QSS3KeyPrefix
+    ParameterLabels:
+      KeyPairName:
+        default: EC2 Key pair
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 object key prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
+      AccessCIDR:
+        default: Permitted IP range
+      VPCID:
+        default: VPC ID
+      PrivateSubnet1ID:
+        default: First subnet ID for Auto Scaling group
+      PrivateSubnet2ID:
+        default: Second subnet ID for Auto Scaling group
+      PrivateSubnet3ID:
+        default: Third subnet ID for Auto Scaling group
+      LoadBalancerType:
+        default: "Internal/external load balancer?"
+      ACMSSLCertificateArn:
+        default: SSL certificate ARN
+      HostedZoneID:
+        default: Hosted-zone ID
+      DomainName:
+        default: Load balancer DNS domain name
+      VaultVersion:
+        default: HashiCorp Vault version
+      VaultDeploymentSize:
+        default: HashiCorp Vault deployment size
 Parameters:
   ClusterName:
     Type: String
