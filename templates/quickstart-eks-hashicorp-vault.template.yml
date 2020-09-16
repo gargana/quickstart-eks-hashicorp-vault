@@ -1,8 +1,74 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Deploys the HashiCorp Vault helm chart into a Kubernetes cluster (qs-1qmcrhdml)"
 Metadata:
+  LintSpellExclude:
+    - Kubernetes
+    - namespace
+    - HashiCorp
+    - Vault
+    - balancer
+    - vault-ui
   QSLint:
     Exclusions: [W9002, W9003, W9004, W9006]
+  QuickStartDocumentation:
+    EntrypointName: "Launch into an existing Amazon EKS cluster"
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Network configuration
+        Parameters:
+        - AccessCIDR
+        - PrivateSubnet1ID
+        - PrivateSubnet2ID
+        - PrivateSubnet3ID
+      - Label:
+          default: HashiCorp Vault Configuration
+        Parameters:
+        - VaultVersion
+        - VaultDeploymentSize
+        - KubernetesNameSpace
+        - LoadBalancerType
+        - DomainName
+        - HostedZoneID
+        - ACMSSLCertificateArn
+        - Nodes
+      - Label:
+          default: Quick Start Configuration
+        Parameters:
+          - QSS3BucketName
+          - QSS3BucketRegion
+          - QSS3KeyPrefix
+    ParameterLabels:
+      KeyPairName:
+        default: EC2 Key pair
+      QSS3BucketName:
+        default: Quick Start S3 bucket name
+      QSS3KeyPrefix:
+        default: Quick Start S3 object key prefix
+      QSS3BucketRegion:
+        default: Quick Start S3 bucket Region
+      AccessCIDR:
+        default: Permitted IP range
+      PrivateSubnet1ID:
+        default: First subnet ID for Auto Scaling group
+      PrivateSubnet2ID:
+        default: Second subnet ID for Auto Scaling group
+      PrivateSubnet3ID:
+        default: Third subnet ID for Auto Scaling group
+      LoadBalancerType:
+        default: Internal or external load balancer?
+      ACMSSLCertificateArn:
+        default: ACM SSL certificate ARN
+      HostedZoneID:
+        default: Route 53 hosted zone id
+      DomainName:
+        default: Load balancer DNS name
+      VaultVersion:
+        default: HashiCorp Vault version
+      VaultDeploymentSize:
+        default: HashiCorp Vault deployment size
+      Nodes:
+        default: HashiCorp Vault server nodes
 Parameters:
   ClusterName:
     Type: String
@@ -17,12 +83,13 @@ Parameters:
     Type: "AWS::EC2::Subnet::Id"
   VaultVersion:
     Type: String
-    Default: "1.5.0"
+    Default: "1.5.3"
     AllowedValues: 
-    - "1.5.0"
+    - "1.5.3"
   VaultDeploymentSize:
     Type: String
     Default: "small"
+    Description: Deployment size of dedicated HashiCorp Vault nodes.
     AllowedValues:
       - "small"
       - "medium"
@@ -30,19 +97,21 @@ Parameters:
   KubernetesNameSpace:
     Default: "vault-server"
     Type: String
+    Description: Kubernetes namespace for HashiCorp Vault server.
   Nodes:
     Type: Number
     Default: "3"
     AllowedValues:
       - "3"
-    Description: The number of Vault server nodes.
+    Description: The number of dedicated Vault server nodes and pods.
   HttpProxy:
     Type: String
     Default: ""
+    Description: HTTP proxy server address e.g. "http://10.32.20.10:3128/."
   LoadBalancerType:
     Type: String
     Default: "Internal"
-    Description: Specify if the load balancer for HashiCorp Vault is internal or external.
+    Description: Choose whether the load balancer for HashiCorp Vault is internal or external to the VPC.
     AllowedValues:
       - "Internal"
       - "External"
@@ -53,16 +122,21 @@ Parameters:
     Type: String
   DomainName:
     Type: String
-    Description: Fully qualified domain name for the HashiCorp Vault load balancer.
-      If you don't provide a value for ACMSSLCertificateArn, use the HostedZoneID.
+    Description: >-
+      Fully qualified DNS name for the vault-ui service load balancer.
+      If you don't provide a value for "ACM SSL certificate ARN", use the HostedZoneID.
     MaxLength: 128
     Default: ""
   HostedZoneID:
     Type: String
-    Description: Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start creates the ACM certificate for you using HostedZoneID in conjunction with DomainName.
+    Description: >-
+      Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start
+      creates an ACM certificate for you using HostedZoneID in conjunction with DomainName.
     Default: ""
   ACMSSLCertificateArn:
-    Description: Amazon Resource Name (ARN) of the load balancer's SSL certificate. If you don't provide values for DomainName and HostedZoneID, provide a value for ACMSSLCertificateArn.
+    Description: >-
+      ARN of the load balancer's ACM SSL certificate. If you don't provide values for "Domain name" and
+      "Hosted zone id", provide a value for "ACM SSL certificate ARN".
     Type: String
     Default: ""
   QSS3BucketName:
@@ -457,9 +531,9 @@ Resources:
             service.beta.kubernetes.io/aws-load-balancer-backend-protocol: https
             service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443,8200"
             service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/ui/"
+            ${IsInternalLoadBalancer}
             ${ExternalName}
             ${TTL}
-            ${IsInternalLoadBalancer}
         server:
           nodeSelector: |
             Value: ${ClusterName}-Vault-Server-${PsuedoRandom.GroupId}-Node
@@ -506,12 +580,12 @@ Resources:
                   kms_key_id = "${VaultKmsKey}"
                 }
       - SSLCertificate: !If [ CreateDns, !GetAtt "ACMCertificate.Outputs.ACMCertificate", !Ref "ACMSSLCertificateArn" ]
-        IsInternalLoadBalancer: !If [ InternalLoadBalancer , 'service.beta.kubernetes.io/aws-load-balancer-internal: "true"', "" ]
-        QuotedDomainName: !Sub "'${DomainName}'"
+        IsInternalLoadBalancer: !If [ InternalLoadBalancer , 'service.beta.kubernetes.io/aws-load-balancer-internal: "true"', 'service.beta.kubernetes.io/aws-load-balancer-internal: "false"' ]
         SecurityGroups: !Sub "service.beta.kubernetes.io/aws-load-balancer-extra-security-groups: ${VaultSecurityGroup}"
-        #DNSSAN: !If [ CreateDns, !Sub 'serverAdditionalDNSSANs: ["${QuotedDomainName}"]', ""]
+        QuotedDomainName: !If [ CreateDns, !Sub "'${DomainName}'", "" ]
+        #DNSSAN: !If [ CreateDns, !Sub 'serverAdditionalDNSSANs: ["${QuotedDomainName}"]',  !Sub "{AWS::NoValue}"]
         ExternalName: !If [ CreateDns, !Sub '"external-dns.alpha.kubernetes.io/hostname": "${DomainName}"', "" ]
-        TTL: '"external-dns.alpha.kubernetes.io/ttl": "30"'
+        TTL: !If [ CreateDns, 'external-dns.alpha.kubernetes.io/ttl: "30"', "" ]
   VaultClusterRole:
     Type: "AWSQS::Kubernetes::Resource"
     DependsOn: VaultNameSpace
@@ -574,7 +648,7 @@ Resources:
         RoleName: !Sub "VaultIAMRole-${PsuedoRandom.GroupId}"
   VaultInitialisationJob:
     Type: "AWSQS::Kubernetes::Resource"
-    DependsOn: [ VaultClusterRoleBinding ]
+    DependsOn: [ VaultClusterRoleBinding, VaultCertificatesJob ]
     Properties:
       ClusterName: !Ref ClusterName
       Namespace: !Ref KubernetesNameSpace
@@ -637,7 +711,7 @@ Resources:
                   args:
                   - >
                     sleep 15;
-                    yum install -y awscli;
+                    yum install -y awscli 2>&1 > /dev/null;
                     export AWS_REGION=${AWS::Region};
                     export RELEASE_NAME=${ReleaseName};
                     export NAMESPACE=${NameSpace};

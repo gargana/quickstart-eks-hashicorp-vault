@@ -35,4 +35,4 @@ tests:
   vault-eks-single:
     regions:
     - eu-west-1
-    template: templates/quickstart-eks-hashicorp-vault.yml
+    template: templates/quickstart-eks-hashicorp-vault.template.yml

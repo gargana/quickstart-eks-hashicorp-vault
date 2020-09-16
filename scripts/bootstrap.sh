@@ -13,7 +13,7 @@ get_secret () {
 }
 
 # Install JQ as we use it later on
-yum install -y jq >&1 >/dev/null
+yum install -y jq 2>&1 >/dev/null
 
 # Give the Helm chart a chance to get started
 echo "Sleeping for ${SLEEP_SECONDS} seconds"
