@@ -259,26 +259,15 @@ Resources:
       Parameters:
         HttpProxy: !Ref HttpProxy
         KeyPairName: !Ref 'KeyPairName'
-        # TODO: Get from existing VPC rather than have as paramters
-        PrivateSubnet1ID: !Ref PrivateSubnet1ID
-        PrivateSubnet2ID: !Ref PrivateSubnet2ID
-        PrivateSubnet3ID: !Ref PrivateSubnet3ID
-        VPCID: !Ref GetClusterVPCID
+        Subnet1ID: !Ref PrivateSubnet1ID
+        Subnet2ID: !Ref PrivateSubnet2ID
+        Subnet3ID: !Ref PrivateSubnet3ID
         NodeInstanceType: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "InstanceType" ]
         NumberOfNodes: !Ref Nodes
         MaxNumberOfNodes: !Ref Nodes
-        NodeGroupName: !Sub "Vault-Server-${PsuedoRandom.GroupId}"
+        NodeGroupName: !Sub "Vault-${PseudoRandom.GroupId}"
         NodeVolumeSize: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "VolumeSize" ]
-        ManagedNodeGroup: "yes"
-        EKSControlPlane: !Ref ClusterName
-        ControlPlaneSecurityGroup: !Ref GetClusterSecurityGroupId
-        NodeInstanceProfile: !Ref NodeInstanceProfile
-        NodeInstanceRoleName: !Ref NodeInstanceRole
-        NodeInstanceRoleArn: !GetAtt NodeInstanceRole.Arn
-        KubernetesVersion: !Ref GetClusterKubernetesVersion
-        QSS3BucketName: !Ref QSS3BucketName
-        QSS3KeyPrefix: !Sub "${QSS3KeyPrefix}submodules/quickstart-amazon-eks-nodegroup/"
-        QSS3BucketRegion: !Ref QSS3BucketRegion
+        EKSClusterName: !Ref ClusterName
   ACMCertificate:
     Metadata:
       cfn-lint:
