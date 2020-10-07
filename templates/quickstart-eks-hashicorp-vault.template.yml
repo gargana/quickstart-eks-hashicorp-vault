@@ -48,7 +48,9 @@ Metadata:
       QSS3BucketRegion:
         default: Quick Start S3 bucket Region
       AccessCIDR:
-        default: Permitted IP range
+        default: Permitted IP range for Vault UI
+      KubernetesNameSpace:
+        default: Kubernetes namespace for Vault
       PrivateSubnet1ID:
         default: First subnet ID for Auto Scaling group
       PrivateSubnet2ID:
