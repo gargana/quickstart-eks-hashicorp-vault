@@ -265,7 +265,7 @@ Resources:
         NodeInstanceType: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "InstanceType" ]
         NumberOfNodes: !Ref Nodes
         MaxNumberOfNodes: !Ref Nodes
-        NodeGroupName: !Sub "Vault-${PseudoRandom.GroupId}"
+        NodeGroupName: !Sub "Vault-${PsuedoRandom.GroupId}"
         NodeVolumeSize: !FindInMap [ "Scaling", !Ref VaultDeploymentSize, "VolumeSize" ]
         EKSClusterName: !Ref ClusterName
   ACMCertificate:
