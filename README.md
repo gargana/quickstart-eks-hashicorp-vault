@@ -39,7 +39,7 @@ Deploying this Quick Start with default parameters into an existing Amazon EKS c
 For a diagram of the new VPC and new EKS cluster deployment options, see the 
 [Amazon EKS Quick Start documentation](https://docs.aws.amazon.com/quickstart/latest/amazon-eks-architecture/architecture.html).
  
-![Consul architecture diagram](images/architecture.png)
+![Vault architecture diagram](docs/images/architecture.png)
 *Figure 1: Quick Start architecture for HashiCorp Consul on Amazon EKS*
 
 As shown in Figure 1, the Quick Start sets up the following:
