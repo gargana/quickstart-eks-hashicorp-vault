@@ -2,6 +2,22 @@
 // Identify your target audience and explain how/why they would use this Quick Start.
 //Avoid borrowing text from third-party websites (copying text from AWS service documentation is fine). Also, avoid marketing-speak, focusing instead on the technical aspect.
 
-This Quick Start reference deployment guide provides step-by-step instructions for deploying {partner-product-short-name} on the AWS Cloud.
 
-This Quick Start is for users who <target audience and usage scenario>
+This Quick Start reference deployment guide provides step-by-step instructions for deploying {partner-company-name}
+{partner-product-short-name} on Amazon Elastic Kubernetes Service (Amazon EKS) via {partner-company-name}
+{partner-product-short-name}'s Helm chart.
+
+{partner-company-name} {partner-product-short-name} is a product that centrally secures, stores and controls access to
+tokens, passwords, certificates, and encryption keys through a UI, CLI, or an HTTP API.
+
+{partner-company-name} {partner-product-short-name}'s core use cases include:
+
+* _Secrets management_: Securely manage and deploy secrets across different environments, applications, and services.
+* _Encryption and data protection_: Manage encryption and keys for developers and operators across different
+environments, applications, and services.
+* _Privileged-access management_: Secure workloads for application-to-application and user-to-application credential
+management across different environments and services.
+
+This Quick Start is for for DevOps professionals and application developers who want to manage their secrets, data, and
+key-value stores. It is deployed via [{partner-product-short-name} Helm chart](https://github.com/hashicorp/vault-helm),
+which contains all of the resource definitions to install and configure Vault inside of a Kubernetes cluster.

@@ -20,4 +20,4 @@ _Add any security-related information._
 == Other useful information
 //Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs from on-premises usage.
 
-_Add any other details that will help the customer use the software on AWS._
+* [Vault Kubernetes integration](https://www.vaultproject.io/docs/platform/k8s)

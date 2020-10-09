@@ -18,4 +18,8 @@ For additional information, see https://docs.aws.amazon.com/AWSCloudFormation/la
 
 == Troubleshooting
 
-<Steps for troubleshooting the deployment go here.>
+For general EKS troubleshooting steps see the
+[EKS Quick Start documentation](https://aws-quickstart.github.io/quickstart-amazon-eks/).
+
+For Vault specific troubleshooting see
+[Vault troubleshooting documentation](https://learn.hashicorp.com/tutorials/vault/troubleshooting).

@@ -1,7 +1,7 @@
 :quickstart-project-name: quickstart-eks-hashicorp-vault
 :partner-product-name: Vault on Amazon EKS
 :partner-product-short-name: Vault
-:partner-company-name: Hashicorp
+:partner-company-name: HashiCorp
 :doc-month: May
 :doc-year: 2020
 :partner-contributors: Dan Callao - {partner-company-name}

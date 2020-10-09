@@ -851,7 +851,7 @@ p.footer-text a{color:#d7d8d8}
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph text-center">
 <p><strong>May, 2020</strong><br>
-<em>Dan Callao - Hashicorp</em><br>
+<em>Dan Callao - HashiCorp</em><br>
 <em>Andrew Gargan - AWS Partner SA</em></p>
 </div></div></td>
 </tr>
@@ -871,7 +871,7 @@ report bugs, or submit feature ideas for this Quick Start.
 </table>
 </div>
 <div class="paragraph text-left">
-<p>This Quick Start was created by Hashicorp in collaboration with Amazon Web Services (AWS). <a href="http://aws.amazon.com/quickstart/" target="_blank" rel="noopener">Quick Starts</a> are automated reference deployments that use AWS CloudFormation templates to deploy key technologies on AWS, following AWS best practices.</p>
+<p>This Quick Start was created by HashiCorp in collaboration with Amazon Web Services (AWS). <a href="http://aws.amazon.com/quickstart/" target="_blank" rel="noopener">Quick Starts</a> are automated reference deployments that use AWS CloudFormation templates to deploy key technologies on AWS, following AWS best practices.</p>
 </div>
 </div>
 </div>
@@ -888,10 +888,36 @@ report bugs, or submit feature ideas for this Quick Start.
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>This Quick Start reference deployment guide provides step-by-step instructions for deploying Vault on the AWS Cloud.</p>
+<p>This Quick Start reference deployment guide provides step-by-step instructions for deploying HashiCorp
+Vault on Amazon Elastic Kubernetes Service (Amazon EKS) via HashiCorp
+Vault&#8217;s Helm chart.</p>
 </div>
 <div class="paragraph">
-<p>This Quick Start is for users who &lt;target audience and usage scenario&gt;</p>
+<p>HashiCorp Vault is a product that centrally secures, stores and controls access to
+tokens, passwords, certificates, and encryption keys through a UI, CLI, or an HTTP API.</p>
+</div>
+<div class="paragraph">
+<p>HashiCorp Vault&#8217;s core use cases include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Secrets management</em>: Securely manage and deploy secrets across different environments, applications, and services.</p>
+</li>
+<li>
+<p><em>Encryption and data protection</em>: Manage encryption and keys for developers and operators across different
+environments, applications, and services.</p>
+</li>
+<li>
+<p><em>Privileged-access management</em>: Secure workloads for application-to-application and user-to-application credential
+management across different environments and services.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This Quick Start is for for DevOps professionals and application developers who want to manage their secrets, data, and
+key-value stores. It is deployed via [Vault Helm chart](<a href="https://github.com/hashicorp/vault-helm" class="bare">https://github.com/hashicorp/vault-helm</a>),
+which contains all of the resource definitions to install and configure Vault inside of a Kubernetes cluster.</p>
 </div></div></td>
 </tr>
 </tbody>
@@ -982,40 +1008,62 @@ AWS Cloud.</p>
 <div class="paragraph">
 <p>As shown in Figure 1, the Quick Start sets up the following:</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p>A highly available architecture that spans two Availability Zones.*</p>
-</li>
-<li>
-<p>A VPC configured with public and private subnets, according to AWS
-best practices, to provide you with your own virtual network on AWS.*</p>
-</li>
-</ul>
-</div>
 <div class="paragraph">
-<p>In the public subnets:</p>
+<p>In AWS:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Managed network address translation (NAT) gateways to allow outbound
-internet access for resources in the private subnets.*</p>
+<p>Elastic Load Balancer.</p>
 </li>
 <li>
-<p>A Linux bastion host in an Auto Scaling group to allow inbound Secure
-Shell (SSH) access to EC2 instances in public and private subnets.*</p>
+<p>Amazon Certificate Manager(ACM) certificate.</p>
+</li>
+<li>
+<p>boot-vault IAM Role.</p>
+</li>
+<li>
+<p>vault-server IAM Role.</p>
+</li>
+<li>
+<p>AWS Secrets Manager Secret to store the Vault root secret.</p>
+</li>
+<li>
+<p>Auto-unseal Key Management Service(KMS) Key.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>In the private subnets:
-* &lt;describe any additional components&gt;.</p>
+<p>In Kubernetes:</p>
 </div>
-<div class="paragraph">
-<p>*The template that deploys the Quick Start into an existing VPC skips
-the components marked by asterisks and prompts you for your existing VPC
-configuration.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Dedicated nodegroup for Vault</p>
+</li>
+<li>
+<p>namespace for Vault.</p>
+</li>
+<li>
+<p>Internal Vault TLS certificate.</p>
+</li>
+<li>
+<p>Vault service:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Vault server pods</p>
+</li>
+<li>
+<p>Vault service</p>
+</li>
+<li>
+<p>Vault UI service</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
 </div></div></td>
 </tr>
 </tbody>
@@ -1302,8 +1350,12 @@ If you’re deploying Vault into an existing VPC, make sure that any private sub
 <div class="sect1">
 <h2 id="_other_useful_information">Other useful information</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p><em>Add any other details that will help the customer use the software on AWS.</em></p>
+<div class="ulist">
+<ul>
+<li>
+<p>[Vault Kubernetes integration](<a href="https://www.vaultproject.io/docs/platform/k8s" class="bare">https://www.vaultproject.io/docs/platform/k8s</a>)</p>
+</li>
+</ul>
 </div>
 <div class="paragraph">
 <p><em><strong>This portion of the deployment guide is located at <code>docs/partner_editable/faq_troubleshooting.adoc</code></strong></em></p>
@@ -1347,7 +1399,12 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <h2 id="_troubleshooting">Troubleshooting</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>&lt;Steps for troubleshooting the deployment go here.&gt;</p>
+<p>For general EKS troubleshooting steps see the
+[EKS Quick Start documentation](<a href="https://aws-quickstart.github.io/quickstart-amazon-eks/" class="bare">https://aws-quickstart.github.io/quickstart-amazon-eks/</a>).</p>
+</div>
+<div class="paragraph">
+<p>For Vault specific troubleshooting see
+[Vault troubleshooting documentation](<a href="https://learn.hashicorp.com/tutorials/vault/troubleshooting" class="bare">https://learn.hashicorp.com/tutorials/vault/troubleshooting</a>).</p>
 </div>
 </div>
 </div>
@@ -1590,7 +1647,7 @@ and to share your customizations with others.</p>
 <p class="footer-text">
 <!-- We can use document attributes: -->
 <!-- Generated with Asciidoctor v2.0.10. -->
-<a href="https://aws.amazon.com/privacy/">Privacy</a> | <a href="https://aws.amazon.com/terms/">Site terms</a> | &copy; 2020, Amazon Web Services, Inc. or its affiliates and Hashicorp. All rights reserved.
+<a href="https://aws.amazon.com/privacy/">Privacy</a> | <a href="https://aws.amazon.com/terms/">Site terms</a> | &copy; 2020, Amazon Web Services, Inc. or its affiliates and HashiCorp. All rights reserved.
 </p>
 </body>
 </html>
