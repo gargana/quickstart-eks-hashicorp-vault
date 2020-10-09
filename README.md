@@ -43,14 +43,18 @@ For a diagram of the new VPC and new EKS cluster deployment options, see the
 *Figure 1: Quick Start architecture for HashiCorp Consul on Amazon EKS*
 
 As shown in Figure 1, the Quick Start sets up the following:
-* In AWS:
+
+In AWS:
+
   * Elastic Load Balancer.
   * Amazon Certificate Manager(ACM) certificate.
   * boot-vault IAM Role.
   * vault-server IAM Role.
   * AWS Secrets Manager Secret to store the Vault root secret.
   * Auto-unseal Key Management Service(KMS) Key.
-* In Kubernetes:
+
+In Kubernetes:
+
   * Dedicated nodegroup for Vault
   * namespace for Vault.
   * Internal Vault TLS certificate.
@@ -58,7 +62,6 @@ As shown in Figure 1, the Quick Start sets up the following:
     * Vault server pods
     * Vault service
     * Vault UI service
-    * consul-ui
 
 ## Cost and licenses
 
@@ -187,7 +190,7 @@ For general EKS troubleshooting steps see the
 [EKS Quick Start documentation](https://docs.aws.amazon.com/quickstart/latest/amazon-eks-architecture/). 
 
 For Vault specific troubleshooting see 
-[Consul troubleshooting documentation](https://learn.hashicorp.com/tutorials/vault/troubleshooting).
+[Vault troubleshooting documentation](https://learn.hashicorp.com/tutorials/vault/troubleshooting).
 
 For additional information, see Troubleshooting AWS CloudFormation on the AWS website. 
 
