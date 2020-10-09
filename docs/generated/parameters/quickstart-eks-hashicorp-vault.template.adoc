@@ -2,7 +2,7 @@
 .Network configuration
 [width="100%",cols="16%,11%,73%",options="header",]
 |===
-|Parameter label (name) |Default value|Description|Permitted IP range
+|Parameter label (name) |Default value|Description|Permitted IP range for Vault UI
 (`AccessCIDR`)|`**__Requires input__**`|The CIDR IP range that is permitted to access Vault Note: A value of 0.0.0.0/0 allows access from ANY IP address.|First subnet ID for Auto Scaling group
 (`PrivateSubnet1ID`)|`**__Requires input__**`|NO_DESCRIPTION|Second subnet ID for Auto Scaling group
 (`PrivateSubnet2ID`)|`**__Requires input__**`|NO_DESCRIPTION|Third subnet ID for Auto Scaling group
@@ -13,12 +13,12 @@
 |===
 |Parameter label (name) |Default value|Description|HashiCorp Vault version
 (`VaultVersion`)|`1.5.3`|NO_DESCRIPTION|HashiCorp Vault deployment size
-(`VaultDeploymentSize`)|`small`|Deployment size of dedicated HashiCorp Vault nodes.|**NO_LABEL**
+(`VaultDeploymentSize`)|`small`|Deployment size of dedicated HashiCorp Vault nodes.|Kubernetes namespace for Vault
 (`KubernetesNameSpace`)|`vault-server`|Kubernetes namespace for HashiCorp Vault server.|Internal or external load balancer?
 (`LoadBalancerType`)|`Internal`|Choose whether the load balancer for HashiCorp Vault is internal or external to the VPC.|Load balancer DNS name
-(`DomainName`)|`**__Requires input__**`|Fully qualified DNS name for the vault-ui service load balancer. If you don't provide a value for "ACM SSL certificate ARN", use the HostedZoneID.|Route 53 hosted zone id
-(`HostedZoneID`)|`**__Requires input__**`|Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start creates an ACM certificate for you using HostedZoneID in conjunction with DomainName.|ACM SSL certificate ARN
-(`ACMSSLCertificateArn`)|`**__Requires input__**`|ARN of the load balancer's ACM SSL certificate. If you don't provide values for "Domain name" and "Hosted zone id", provide a value for "ACM SSL certificate ARN".|HashiCorp Vault server nodes
+(`DomainName`)|`**__Blank string__**`|Fully qualified DNS name for the vault-ui service load balancer. If you don't provide a value for "ACM SSL certificate ARN", use the HostedZoneID.|Route 53 hosted zone id
+(`HostedZoneID`)|`**__Blank string__**`|Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start creates an ACM certificate for you using HostedZoneID in conjunction with DomainName.|ACM SSL certificate ARN
+(`ACMSSLCertificateArn`)|`**__Blank string__**`|ARN of the load balancer's ACM SSL certificate. If you don't provide values for "Domain name" and "Hosted zone id", provide a value for "ACM SSL certificate ARN".|HashiCorp Vault server nodes
 (`Nodes`)|`3`|The number of dedicated Vault server nodes and pods.
 |===
 .Quick Start Configuration
