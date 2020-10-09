@@ -8,30 +8,39 @@ Metadata:
     - Vault
     - balancer
     - vault-ui
-  QSLint:
-    Exclusions: [W9002, W9003, W9004, W9006]
+    - Auto Scaling
+    - Hosted
+    - Domain
+#  QSLint:
+#    Exclusions: [W9002, W9003, W9004, W9006]
   QuickStartDocumentation:
     EntrypointName: "Launch into an existing Amazon EKS cluster"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: Amazon EKS cluster
+        Parameters:
+          - ClusterName
+      - Label:
           default: Network configuration
         Parameters:
-        - AccessCIDR
-        - PrivateSubnet1ID
-        - PrivateSubnet2ID
-        - PrivateSubnet3ID
+          - AccessCIDR
+          - PrivateSubnet1ID
+          - PrivateSubnet2ID
+          - PrivateSubnet3ID
+          - HttpProxy
+          - KeyPairName
       - Label:
           default: HashiCorp Vault Configuration
         Parameters:
-        - VaultVersion
-        - VaultDeploymentSize
-        - KubernetesNameSpace
-        - LoadBalancerType
-        - DomainName
-        - HostedZoneID
-        - ACMSSLCertificateArn
-        - Nodes
+          - VaultVersion
+          - VaultDeploymentSize
+          - KubernetesNameSpace
+          - LoadBalancerType
+          - DomainName
+          - HostedZoneID
+          - ACMSSLCertificateArn
+          - Nodes
       - Label:
           default: Quick Start Configuration
         Parameters:
@@ -40,7 +49,7 @@ Metadata:
           - QSS3KeyPrefix
     ParameterLabels:
       KeyPairName:
-        default: EC2 Key pair
+        default: EC2 key pair
       QSS3BucketName:
         default: Quick Start S3 bucket name
       QSS3KeyPrefix:
@@ -71,27 +80,38 @@ Metadata:
         default: HashiCorp Vault deployment size
       Nodes:
         default: HashiCorp Vault server nodes
+      ClusterName:
+        default: Amazon EKS cluster name
+      HttpProxy:
+        default: HTTP proxy
 Parameters:
   ClusterName:
     Type: String
-    Description: Amazon EKS Cluster
+    Description: Amazon EKS cluster.
   KeyPairName:
     Type: "AWS::EC2::KeyPair::KeyName"
+    Description: Name of an existing key pair, which allows you
+      to securely connect to your instances after they launch.
   PrivateSubnet1ID:
     Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet in Availability Zone 1 of your existing VPC (e.g., subnet-fe9a8b32).
   PrivateSubnet2ID:
     Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet in Availability Zone 2 of your existing VPC (e.g., subnet-fe9a8b32).
   PrivateSubnet3ID:
     Type: "AWS::EC2::Subnet::Id"
+    Description: ID of the private subnet in Availability Zone 3 of your existing VPC (e.g., subnet-fe9a8b32).
   VaultVersion:
     Type: String
     Default: "1.5.3"
+    Description: Version of Vault to use.
     AllowedValues: 
     - "1.5.3"
   VaultDeploymentSize:
     Type: String
     Default: "small"
-    Description: Deployment size of dedicated HashiCorp Vault nodes.
+    Description: Deployment size of dedicated HashiCorp Vault nodes
+      (see https://learn.hashicorp.com/tutorials/vault/kubernetes-reference-architecture).
     AllowedValues:
       - "small"
       - "medium"
@@ -119,8 +139,9 @@ Parameters:
       - "External"
   AccessCIDR:
     AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/([0-9]|[1-2][0-9]|3[0-2]))$"
-    Description: 'The CIDR IP range that is permitted to access Vault Note: A value
-      of 0.0.0.0/0 allows access from ANY IP address.'
+    Description: "The CIDR IP range that is permitted to access Vault. Note: A value
+      of 0.0.0.0/0 allows access from ANY IP address."
+    Default: 127.0.0.1/32
     Type: String
   DomainName:
     Type: String
@@ -133,7 +154,7 @@ Parameters:
     Type: String
     Description: >-
       Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start
-      creates an ACM certificate for you using HostedZoneID in conjunction with DomainName.
+      creates an ACM certificate for you using HostedZoneID in conjunction with Domain name.
     Default: ""
   ACMSSLCertificateArn:
     Description: >-
@@ -168,7 +189,6 @@ Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, 'aws-quickstart']
   InternalLoadBalancer: !Equals [!Ref LoadBalancerType, 'Internal']
   CustomDns: !Not [!Equals [!Ref DomainName, '']]
-  HostedZoneExists: !Not [!Equals [!Ref HostedZoneID, '']]
   CreateDns: !And
     - !Not
       - !Equals
@@ -214,42 +234,9 @@ Resources:
       ServiceToken: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:eks-quickstart-ResourceReader"
       AwsCliCommand: !Sub "eks describe-cluster --name ${ClusterName} --query 'cluster.identity.oidc.{issuer:issuer}'"
       IdField: 'issuer'
-  # TODO: These should be global once per account from v3.
-  NodeInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: "/"
-      Roles:
-        - !Ref NodeInstanceRole
-  NodeInstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: !Sub "ec2.${AWS::URLSuffix}"
-            Action:
-              - sts:AssumeRole
-      Path: "/"
-      ManagedPolicyArns:
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'
-        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonElasticFileSystemReadOnlyAccess'
-      Policies:
-        - PolicyName: QSBucketAccess
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: s3:GetObject
-                Resource: !Sub
-                  - "arn:${AWS::Partition}:s3:::${BucketName}/${QSS3KeyPrefix}*"
-                  - BucketName: !If [UsingDefaultBucket, !Sub '${QSS3BucketName}-${AWS::Region}', !Ref QSS3BucketName]
   VaultNodeGroup:
-    # TODO: Nodegroup create with Labels only for Vault other stuff is dissallowed - https://learn.hashicorp.com/tutorials/vault/kubernetes-reference-architecture
+    Metadata:
+      cfn-lint: {config: {ignore_checks: [W9901]}} # Default values in submodule template
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Sub
@@ -292,6 +279,8 @@ Resources:
         DomainName: !Ref DomainName
         HostedZoneID: !Ref HostedZoneID
   VaultSecurityGroup:
+    Metadata:
+      cfn-lint: {config: {ignore_checks: [E3008]}} # Parameter type mismatch
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enables SSH access from the Bastion servers.
