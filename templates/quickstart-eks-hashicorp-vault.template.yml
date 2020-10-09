@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "Deploys the HashiCorp Vault helm chart into a Kubernetes cluster (qs-1qmcrhdml)"
+Description: "Deploys the HashiCorp Vault helm chart on an Amazon EKS cluster (qs-1r79drkr6)"
 Metadata:
   LintSpellExclude:
     - Kubernetes
