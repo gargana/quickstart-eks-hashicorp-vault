@@ -1370,7 +1370,30 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <div class="sect2">
 <h3 id="_launch_into_an_existing_amazon_eks_cluster">Launch into an existing Amazon EKS cluster</h3>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 1. Network configuration</caption>
+<caption class="title">Table 1. Amazon EKS cluster</caption>
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 11%;">
+<col style="width: 73%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter label (name)</th>
+<th class="tableblock halign-left valign-top">Default value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EKS cluster name
+(<code>ClusterName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Amazon EKS cluster.</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 2. Network configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -1387,31 +1410,43 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Permitted IP range for Vault UI
 (<code>AccessCIDR</code>)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The CIDR IP range that is permitted to access Vault Note: A value of 0.0.0.0/0 allows access from ANY IP address.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>127.0.0.1/32</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The CIDR IP range that is permitted to access Vault. Note: A value of 0.0.0.0/0 allows access from ANY IP address.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">First subnet ID for Auto Scaling group
 (<code>PrivateSubnet1ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NO_DESCRIPTION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the private subnet in Availability Zone 1 of your existing VPC (e.g., subnet-fe9a8b32).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Second subnet ID for Auto Scaling group
 (<code>PrivateSubnet2ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NO_DESCRIPTION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the private subnet in Availability Zone 2 of your existing VPC (e.g., subnet-fe9a8b32).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Third subnet ID for Auto Scaling group
 (<code>PrivateSubnet3ID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NO_DESCRIPTION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ID of the private subnet in Availability Zone 3 of your existing VPC (e.g., subnet-fe9a8b32).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP proxy
+(<code>HttpProxy</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Blank string</em></strong></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">HTTP proxy server address e.g. "http://10.32.20.10:3128/."</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">EC2 key pair
+(<code>KeyPairName</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Requires input</em></strong></code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of an existing key pair, which allows you to securely connect to your instances after they launch.</p></td>
 </tr>
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 2. HashiCorp Vault Configuration</caption>
+<caption class="title">Table 3. HashiCorp Vault Configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">
@@ -1429,13 +1464,13 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <td class="tableblock halign-left valign-top"><p class="tableblock">HashiCorp Vault version
 (<code>VaultVersion</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>1.5.3</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">NO_DESCRIPTION</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Version of Vault to use.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">HashiCorp Vault deployment size
 (<code>VaultDeploymentSize</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>small</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Deployment size of dedicated HashiCorp Vault nodes.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Deployment size of dedicated HashiCorp Vault nodes (see <a href="https://learn.hashicorp.com/tutorials/vault/kubernetes-reference-architecture" class="bare">https://learn.hashicorp.com/tutorials/vault/kubernetes-reference-architecture</a>).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Kubernetes namespace for Vault
@@ -1459,7 +1494,7 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 <td class="tableblock halign-left valign-top"><p class="tableblock">Route 53 hosted zone id
 (<code>HostedZoneID</code>)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code><strong><em>Blank string</em></strong></code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Route 53-hosted zone ID of the domain name. If you don&#8217;t provide an ACMSSLCertificateArn value, the Quick Start creates an ACM certificate for you using HostedZoneID in conjunction with DomainName.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Route 53-hosted zone ID of the domain name. If you don&#8217;t provide an ACMSSLCertificateArn value, the Quick Start creates an ACM certificate for you using HostedZoneID in conjunction with Domain name.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">ACM SSL certificate ARN
@@ -1476,7 +1511,7 @@ When you set <strong>Rollback on failure</strong> to <strong>Disabled</strong>, 
 </tbody>
 </table>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 3. Quick Start Configuration</caption>
+<caption class="title">Table 4. Quick Start Configuration</caption>
 <colgroup>
 <col style="width: 16%;">
 <col style="width: 11%;">

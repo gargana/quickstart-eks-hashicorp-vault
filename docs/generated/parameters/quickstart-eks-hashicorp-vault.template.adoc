@@ -1,23 +1,31 @@
 
+.Amazon EKS cluster
+[width="100%",cols="16%,11%,73%",options="header",]
+|===
+|Parameter label (name) |Default value|Description|Amazon EKS cluster name
+(`ClusterName`)|`**__Requires input__**`|Amazon EKS cluster.
+|===
 .Network configuration
 [width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label (name) |Default value|Description|Permitted IP range for Vault UI
-(`AccessCIDR`)|`**__Requires input__**`|The CIDR IP range that is permitted to access Vault Note: A value of 0.0.0.0/0 allows access from ANY IP address.|First subnet ID for Auto Scaling group
-(`PrivateSubnet1ID`)|`**__Requires input__**`|NO_DESCRIPTION|Second subnet ID for Auto Scaling group
-(`PrivateSubnet2ID`)|`**__Requires input__**`|NO_DESCRIPTION|Third subnet ID for Auto Scaling group
-(`PrivateSubnet3ID`)|`**__Requires input__**`|NO_DESCRIPTION
+(`AccessCIDR`)|`127.0.0.1/32`|The CIDR IP range that is permitted to access Vault. Note: A value of 0.0.0.0/0 allows access from ANY IP address.|First subnet ID for Auto Scaling group
+(`PrivateSubnet1ID`)|`**__Requires input__**`|ID of the private subnet in Availability Zone 1 of your existing VPC (e.g., subnet-fe9a8b32).|Second subnet ID for Auto Scaling group
+(`PrivateSubnet2ID`)|`**__Requires input__**`|ID of the private subnet in Availability Zone 2 of your existing VPC (e.g., subnet-fe9a8b32).|Third subnet ID for Auto Scaling group
+(`PrivateSubnet3ID`)|`**__Requires input__**`|ID of the private subnet in Availability Zone 3 of your existing VPC (e.g., subnet-fe9a8b32).|HTTP proxy
+(`HttpProxy`)|`**__Blank string__**`|HTTP proxy server address e.g. "http://10.32.20.10:3128/."|EC2 key pair
+(`KeyPairName`)|`**__Requires input__**`|Name of an existing key pair, which allows you to securely connect to your instances after they launch.
 |===
 .HashiCorp Vault Configuration
 [width="100%",cols="16%,11%,73%",options="header",]
 |===
 |Parameter label (name) |Default value|Description|HashiCorp Vault version
-(`VaultVersion`)|`1.5.3`|NO_DESCRIPTION|HashiCorp Vault deployment size
-(`VaultDeploymentSize`)|`small`|Deployment size of dedicated HashiCorp Vault nodes.|Kubernetes namespace for Vault
+(`VaultVersion`)|`1.5.3`|Version of Vault to use.|HashiCorp Vault deployment size
+(`VaultDeploymentSize`)|`small`|Deployment size of dedicated HashiCorp Vault nodes (see https://learn.hashicorp.com/tutorials/vault/kubernetes-reference-architecture).|Kubernetes namespace for Vault
 (`KubernetesNameSpace`)|`vault-server`|Kubernetes namespace for HashiCorp Vault server.|Internal or external load balancer?
 (`LoadBalancerType`)|`Internal`|Choose whether the load balancer for HashiCorp Vault is internal or external to the VPC.|Load balancer DNS name
 (`DomainName`)|`**__Blank string__**`|Fully qualified DNS name for the vault-ui service load balancer. If you don't provide a value for "ACM SSL certificate ARN", use the HostedZoneID.|Route 53 hosted zone id
-(`HostedZoneID`)|`**__Blank string__**`|Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start creates an ACM certificate for you using HostedZoneID in conjunction with DomainName.|ACM SSL certificate ARN
+(`HostedZoneID`)|`**__Blank string__**`|Route 53-hosted zone ID of the domain name. If you don't provide an ACMSSLCertificateArn value, the Quick Start creates an ACM certificate for you using HostedZoneID in conjunction with Domain name.|ACM SSL certificate ARN
 (`ACMSSLCertificateArn`)|`**__Blank string__**`|ARN of the load balancer's ACM SSL certificate. If you don't provide values for "Domain name" and "Hosted zone id", provide a value for "ACM SSL certificate ARN".|HashiCorp Vault server nodes
 (`Nodes`)|`3`|The number of dedicated Vault server nodes and pods.
 |===

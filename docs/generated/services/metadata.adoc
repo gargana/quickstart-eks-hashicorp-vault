@@ -1,7 +1,6 @@
 
 :template_aws_cloudformation_stack:
 :template_aws_ec2_securitygroup:
-:template_aws_iam_instanceprofile:
 :template_aws_iam_role:
 :template_aws_kms_key:
 :template_aws_route53_recordset:
