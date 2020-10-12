@@ -4,7 +4,8 @@
 
 // Space needed to maintain table headers
 |IAM roles | 2
+|KMS Keys | 1
 |Auto Scaling groups | 1
-|Application Load Balancers |1
+|Application Load Balancers | 1
 |EC2 instances | 3
 |===

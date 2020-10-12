@@ -8,6 +8,7 @@
 :quickstart-contributors: Andrew Gargan - AWS Partner SA
 :deployment_time: 15 minutes / 1 hour
 :default_deployment_region: us-east-1
+:production_build:
 // Uncomment these two attributes if you are leveraging
 // - an AWS Marketplace listing.
 // Additional content will be auto-generated based on these attributes.
