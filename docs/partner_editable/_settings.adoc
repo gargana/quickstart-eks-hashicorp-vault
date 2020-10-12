@@ -2,13 +2,13 @@
 :partner-product-name: Vault on Amazon EKS
 :partner-product-short-name: Vault
 :partner-company-name: HashiCorp
-:doc-month: May
+:doc-month: October
 :doc-year: 2020
 :partner-contributors: Dan Callao - {partner-company-name}
 :quickstart-contributors: Andrew Gargan - AWS Partner SA
 :deployment_time: 15 minutes / 1 hour
 :default_deployment_region: us-east-1
-:production_build:
+//:production_build:
 // Uncomment these two attributes if you are leveraging
 // - an AWS Marketplace listing.
 // Additional content will be auto-generated based on these attributes.
