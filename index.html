@@ -808,7 +808,6 @@ p.footer-text a{color:#d7d8d8}
 <li><a href="#_launch_the_quick_start">Launch the Quick Start</a></li>
 </ul>
 </li>
-<li><a href="#_test_the_deployment">Test the deployment</a></li>
 <li><a href="#_post_deployment_steps">Post deployment steps</a></li>
 <li><a href="#_best_practices_for_using_vault_on_aws">Best practices for using Vault on AWS</a></li>
 <li><a href="#_security">Security</a></li>
@@ -917,7 +916,7 @@ management across different environments and services.</p>
 <div class="paragraph">
 <p>This Quick Start is for for DevOps professionals and application developers who want to manage their secrets, data, and
 key-value stores. It is deployed via
-<a href="https://github.com/hashicorp/vault-helm" class="external" target="_blank" rel="noopener">Vault Helm chart</a>,
+<a href="https://github.com/hashicorp/vault-helm" class="external" target="_blank" rel="noopener">HashiCorp Vault&#8217;s Helm chart</a>,
 which contains all of the resource definitions to install and configure Vault inside of a Kubernetes cluster.</p>
 </div></div></td>
 </tr>
@@ -1321,30 +1320,43 @@ If you’re deploying Vault into an existing VPC, make sure that any private sub
 </div>
 </div>
 <div class="sect1">
-<h2 id="_test_the_deployment">Test the deployment</h2>
-<div class="sectionbody">
-
-</div>
-</div>
-<div class="sect1">
 <h2 id="_post_deployment_steps">Post deployment steps</h2>
 <div class="sectionbody">
-
+<div class="paragraph">
+<p>See the Vault on Amazon EKS <a href="https://www.vaultproject.io/guides" class="external" target="_blank" rel="noopener">user guide</a> to configure
+Vault on Amazon EKS.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_best_practices_for_using_vault_on_aws">Best practices for using Vault on AWS</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><em>Add any best practices for using the software.</em></p>
+<p>The Vault UI is provided for exploratory purposes. We recommend keeping the Vault on Amazon EKS.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_security">Security</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p><em>Add any security-related information.</em></p>
+<div class="ulist">
+<ul>
+<li>
+<p>End to end TLS is enforced.</p>
+</li>
+<li>
+<p>A dedicated Kubernetes namespace is created for Vault on Amazon EKS Kubernetes resources.</p>
+</li>
+<li>
+<p>AWS KMS is used to perform auto-unseal of the Vault on Amazon EKS servers.</p>
+</li>
+<li>
+<p>Vault on Amazon EKS is running on dedicated Kubernetes nodes.</p>
+</li>
+<li>
+<p>Initial Vault on Amazon EKS1 root keys are stored in AWS Secrets manager.</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
@@ -1354,7 +1366,7 @@ If you’re deploying Vault into an existing VPC, make sure that any private sub
 <div class="ulist">
 <ul>
 <li>
-<p>[Vault Kubernetes integration](<a href="https://www.vaultproject.io/docs/platform/k8s" class="bare">https://www.vaultproject.io/docs/platform/k8s</a>)</p>
+<p><a href="https://www.vaultproject.io/docs/platform/k8s" class="external" target="_blank" rel="noopener">Vault Kubernetes integration</a></p>
 </li>
 </ul>
 </div>
@@ -1391,7 +1403,7 @@ sure to delete the stack when you finish troubleshooting.
 </div>
 <div class="paragraph">
 <p>For additional information, see
-<a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html" target="_blank" rel="noopener">Troubleshooting AWS CloudFormation</a>
+<a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html" class="external" target="_blank" rel="noopener">Troubleshooting AWS CloudFormation</a>
 on the AWS website.</p>
 </div>
 <div class="paragraph">
@@ -1401,7 +1413,7 @@ on the AWS website.</p>
 <p><strong>A.</strong> We recommend that you launch the Quick Start templates from the links in this guide or from another S3 bucket. If
 you deploy the templates from a local copy on your computer or from a location other than an S3 bucket, you might
 encounter template size limitations. For more information about AWS CloudFormation quotas, see the
-<a href="http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html" target="_blank" rel="noopener">AWS documentation</a>.</p>
+<a href="http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html" class="external" target="_blank" rel="noopener">AWS documentation</a>.</p>
 </div>
 </div>
 </div>
@@ -1410,11 +1422,11 @@ encounter template size limitations. For more information about AWS CloudFormati
 <div class="sectionbody">
 <div class="paragraph">
 <p>For general EKS troubleshooting steps see the
-[EKS Quick Start documentation](<a href="https://aws-quickstart.github.io/quickstart-amazon-eks/" class="bare">https://aws-quickstart.github.io/quickstart-amazon-eks/</a>).</p>
+<a href="https://aws-quickstart.github.io/quickstart-amazon-eks/" class="external" target="_blank" rel="noopener">EKS Quick Start documentation</a>.</p>
 </div>
 <div class="paragraph">
-<p>For Vault specific troubleshooting see
-[Vault troubleshooting documentation](<a href="https://learn.hashicorp.com/tutorials/vault/troubleshooting" class="bare">https://learn.hashicorp.com/tutorials/vault/troubleshooting</a>).</p>
+<p>For HashiCorp Vault on Amazon EKS specific troubleshooting see
+<a href="https://learn.hashicorp.com/tutorials/vault/troubleshooting" class="external" target="_blank" rel="noopener">Vault troubleshooting documentation</a>.</p>
 </div>
 </div>
 </div>
