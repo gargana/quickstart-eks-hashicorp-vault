@@ -15,7 +15,7 @@ WARNING: When you set *Rollback on failure* to *Disabled*, you continue to incur
 sure to delete the stack when you finish troubleshooting.
 
 For additional information, see
-https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html[Troubleshooting AWS CloudFormation^]
+https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/troubleshooting.html[Troubleshooting AWS CloudFormation, role=external, window=_blank]
 on the AWS website.
 
 *Q.* I encountered a size limitation error when I deployed the AWS CloudFormation templates.
@@ -23,13 +23,13 @@ on the AWS website.
 *A.* We recommend that you launch the Quick Start templates from the links in this guide or from another S3 bucket. If
 you deploy the templates from a local copy on your computer or from a location other than an S3 bucket, you might
 encounter template size limitations. For more information about AWS CloudFormation quotas, see the
-http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html[AWS documentation^].
+http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cloudformation-limits.html[AWS documentation, role=external, window=_blank].
 
 
 == Troubleshooting
 
 For general EKS troubleshooting steps see the
-[EKS Quick Start documentation](https://aws-quickstart.github.io/quickstart-amazon-eks/).
+https://aws-quickstart.github.io/quickstart-amazon-eks/[EKS Quick Start documentation, role=external, window=_blank].
 
-For Vault specific troubleshooting see
-[Vault troubleshooting documentation](https://learn.hashicorp.com/tutorials/vault/troubleshooting).
+For {partner-company-name} {partner-product-name} specific troubleshooting see
+https://learn.hashicorp.com/tutorials/vault/troubleshooting[Vault troubleshooting documentation, role=external, window=_blank].
