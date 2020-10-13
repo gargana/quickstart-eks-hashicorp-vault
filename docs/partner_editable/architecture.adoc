@@ -17,15 +17,15 @@ In AWS:
 * Amazon Certificate Manager(ACM) certificate.
 * boot-vault IAM Role.
 * vault-server IAM Role.
-* AWS Secrets Manager Secret to store the Vault root secret.
-* Auto-unseal Key Management Service(KMS) Key.
+* AWS Secrets Manager secret to store the {partner-product-name} root secret.
+* Auto-unseal AWS Key Management Service(KMS) key.
 
 In Kubernetes:
 
-* Dedicated nodegroup for Vault
-* namespace for Vault.
-* Internal Vault TLS certificate.
+* Dedicated nodegroup for {partner-product-name}.
+* namespace for {partner-product-name}.
+* Internal Vault TLS certificate and certificate authority.
 * Vault service:
-** Vault server pods
-** Vault service
-** Vault UI service
+** Vault server pods.
+** Vault service.
+** Vault ui service.

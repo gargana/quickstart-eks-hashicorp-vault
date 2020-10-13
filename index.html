@@ -916,7 +916,7 @@ management across different environments and services.</p>
 </div>
 <div class="paragraph">
 <p>This Quick Start is for for DevOps professionals and application developers who want to manage their secrets, data, and
-key-value stores. It is deployed via [Vault Helm chart](<a href="https://github.com/hashicorp/vault-helm" class="bare">https://github.com/hashicorp/vault-helm</a>),
+key-value stores. It is deployed via <a href="https://github.com/hashicorp/vault-helm" target="_blank" rel="noopener">Vault Helm chart</a>,
 which contains all of the resource definitions to install and configure Vault inside of a Kubernetes cluster.</p>
 </div></div></td>
 </tr>
@@ -1026,10 +1026,10 @@ AWS Cloud.</p>
 <p>vault-server IAM Role.</p>
 </li>
 <li>
-<p>AWS Secrets Manager Secret to store the Vault root secret.</p>
+<p>AWS Secrets Manager secret to store the Vault on Amazon EKS root secret.</p>
 </li>
 <li>
-<p>Auto-unseal Key Management Service(KMS) Key.</p>
+<p>Auto-unseal AWS Key Management Service(KMS) key.</p>
 </li>
 </ul>
 </div>
@@ -1039,26 +1039,26 @@ AWS Cloud.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Dedicated nodegroup for Vault</p>
+<p>Dedicated nodegroup for Vault on Amazon EKS.</p>
 </li>
 <li>
-<p>namespace for Vault.</p>
+<p>namespace for Vault on Amazon EKS.</p>
 </li>
 <li>
-<p>Internal Vault TLS certificate.</p>
+<p>Internal Vault TLS certificate and certificate authority.</p>
 </li>
 <li>
 <p>Vault service:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Vault server pods</p>
+<p>Vault server pods.</p>
 </li>
 <li>
-<p>Vault service</p>
+<p>Vault service.</p>
 </li>
 <li>
-<p>Vault UI service</p>
+<p>Vault ui service.</p>
 </li>
 </ul>
 </div>
@@ -1094,7 +1094,7 @@ Cloud.</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>This Quick Start assumes familiarity with &lt;knowledge expectations&gt;.</p>
+<p>This Quick Start assumes familiarity with <a href="https://aws.amazon.com/eks/">Amazon EKS</a>, <a href="https://aws.amazon.com/cloudformation/">AWS CloudFormation</a> and <a href="https://kubernetes.io/">Kubernetes</a>.</p>
 </div></div></td>
 </tr>
 </tbody>
