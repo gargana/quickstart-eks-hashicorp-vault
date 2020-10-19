@@ -327,7 +327,7 @@
           "UpdateType": "Mutable"
         },
         "Namespace": {
-          "Required": true,
+          "Required": false,
           "Documentation": "https://github.com/aws-quickstart/quickstart-kubernetes-resource-provider",
           "PrimitiveType": "String",
           "UpdateType": "Mutable"

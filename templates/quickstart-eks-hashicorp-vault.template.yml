@@ -561,9 +561,9 @@ Resources:
                 }
       - SSLCertificate: !If [ CreateDns, !GetAtt "ACMCertificate.Outputs.ACMCertificate", !Ref "ACMSSLCertificateArn" ]
         IsInternalLoadBalancer: !If [ InternalLoadBalancer , 'service.beta.kubernetes.io/aws-load-balancer-internal: "true"', 'service.beta.kubernetes.io/aws-load-balancer-internal: "false"' ]
-        SecurityGroups: !Sub "service.beta.kubernetes.io/aws-load-balancer-extra-security-groups: ${VaultSecurityGroup}"
-        QuotedDomainName: !If [ CreateDns, !Sub "'${DomainName}'", "" ]
-        #DNSSAN: !If [ CreateDns, !Sub 'serverAdditionalDNSSANs: ["${QuotedDomainName}"]',  !Sub "{AWS::NoValue}"]
+        # SecurityGroups: !Sub "service.beta.kubernetes.io/aws-load-balancer-extra-security-groups: ${VaultSecurityGroup}"
+        # QuotedDomainName: !If [ CreateDns, !Sub "'${DomainName}'", "" ]
+        # DNSSAN: !If [ CreateDns, !Sub 'serverAdditionalDNSSANs: ["${QuotedDomainName}"]',  !Sub "{AWS::NoValue}"]
         ExternalName: !If [ CreateDns, !Sub '"external-dns.alpha.kubernetes.io/hostname": "${DomainName}"', "" ]
         TTL: !If [ CreateDns, 'external-dns.alpha.kubernetes.io/ttl: "30"', "" ]
   VaultClusterRole:
@@ -605,7 +605,6 @@ Resources:
           - list
           - create
       - ResourceName: !Sub "boot-vault-${PsuedoRandom.GroupId}"
-        NameSpace: !Ref KubernetesNameSpace
   VaultServiceAccount:
     Type: "AWSQS::Kubernetes::Resource"
     DependsOn: [ VaultNameSpace, VaultClusterRole ]
