@@ -3,15 +3,17 @@
 
 == Post deployment steps
 // If Post-deployment steps are required, add them here. If not, remove the heading
-See the {partner-product-name} https://www.vaultproject.io/guides[user guide, role=external, window=_blank] to configure
-{partner-product-name}.
+See the {partner-product-short-name} https://www.vaultproject.io/guides[user guide, role=external, window=_blank] to
+configure {partner-product-short-name}.
 
 == Best practices for using {partner-product-short-name} on AWS
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating
 // data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed
 //information.
 
-The Vault UI is provided for exploratory purposes. We recommend keeping the {partner-product-name}.
+The {partner-product-short-name} UI is provided for exploratory purposes. We recommend keeping the
+{partner-product-short-name} UI accessible only inside the VPC or disabling access to it by setting the
+permitted IP range to 127.0.0.1/32.
 
 == Security
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating
@@ -19,13 +21,13 @@ The Vault UI is provided for exploratory purposes. We recommend keeping the {par
 // information.
 
 * End to end TLS is enforced.
-* A dedicated Kubernetes namespace is created for {partner-product-name} Kubernetes resources.
-* AWS KMS is used to perform auto-unseal of the {partner-product-name} servers.
-* {partner-product-name} is running on dedicated Kubernetes nodes.
-* Initial {partner-product-name}1 root keys are stored in AWS Secrets manager.
+* A dedicated Kubernetes namespace is created for {partner-product-short-name} Kubernetes resources.
+* AWS KMS is used to perform auto-unseal of the {partner-product-short-name} servers.
+* {partner-product-short-name} is running on dedicated Kubernetes nodes.
+* Initial {partner-product-short-name} root keys are stored in an AWS Secrets manager secret.
 
 == Other useful information
 //Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs
 //from on-premises usage.
 
-* https://www.vaultproject.io/docs/platform/k8s[Vault Kubernetes integration, role=external, window=_blank]
+* https://www.vaultproject.io/docs/platform/k8s[{partner-product-short-name} Kubernetes integration, role=external, window=_blank]
