@@ -4,7 +4,7 @@
 == Post deployment steps
 === Test the deployment
 ==== Kubernetes Consul deployment namespace and dedicated node selection:
-The deployment creates a namespace named `vault-server` by default. To verify the namespace in kuberkenes, please
+The deployment creates a namespace named `vault-server` by default. To verify the namespace in Kubernetes, please
 run the following:
 ----
 $ kubectl get ns
@@ -15,6 +15,7 @@ kube-public       Active   4d7h
 kube-system       Active   4d7h
 vault-server      Active   30m
 ----
+
 The deployment builds kubernetes server pods of the `vault-server` namespace on dedicated nodes. To verify the dedicated nodes,
 please run the following:
 ----
@@ -47,7 +48,7 @@ Verify the Vault HA configuration by running the following:
 ----
 $ kubectl exec -ti -n vault-server vault-sg-01f5e0c0d6458ed88-0 -- /bin/sh
 / $ export VAULT_SKIP_VERIFY=true
-/ $ vault login s.JWF4aKPvElAEzFZZzojl9cgZ
+/ $ vault login s.JWF4aXXXXXXXXXXXXX9cgZ
 Success! You are now authenticated. The token information displayed below
 is already stored in the token helper. You do NOT need to run "vault login"
 again. Future Vault requests will automatically use this token.
@@ -143,15 +144,15 @@ These are the best best practices for using Vault on Amazon EKS Please note that
 Quick Start:
 
 * Enabled AWS KMS auto-unseal: This will make use of AWS KMS for storing and encrypting Vault's unseal keys. For more info, please visit
-[Auto-unseal using AWS KMS](https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms)
+https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms[Auto-unseal using AWS KMS^].
 
-* Enable Cluster HA: This will make sure that Vault is set up for fault tolerance. For more info, please visit [Vault HA Cluster with Integrated Storage](https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive)
+* Enable Cluster HA: This will make sure that Vault is set up for fault tolerance. For more info, please visit https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive[Vault HA Cluster with Integrated Storage^].
 
-* Enable Raft storage for  HA: This will set up the raft consensus protocol as Vault's storage backend. For more info, please visit [Use Integrated Storage for HA Coordination](https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive)
+* Enable Raft storage for  HA: This will set up the raft consensus protocol as Vault's storage backend. For more info, please visit https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive[Use Integrated Storage for HA Coordination^].
 
-* Enable Vault audit to AWS CloudWatch: This will enable audit logs for troubleshoooting. For more info, please visit [Enabling audit devices](https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices)
+* Enable Vault audit to AWS CloudWatch: This will enable audit logs for troubleshooting. For more info, please visit https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices[Enabling audit devices^].
 
-* Enable SSL at the Vault UI endpoint: This will secure the Vault UI endpoint with a SSL certificate. For more info, please visit [Vault UI](https://www.vaultproject.io/docs/configuration/ui)
+* Enable SSL at the Vault UI endpoint: This will secure the Vault UI endpoint with a SSL certificate. For more info, please visit https://www.vaultproject.io/docs/configuration/ui[Vault UI^].
 
 == Other useful information
 //Provide any other information of interest to users, especially focusing on areas where AWS or cloud usage differs

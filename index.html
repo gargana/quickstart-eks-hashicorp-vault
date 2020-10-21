@@ -1316,7 +1316,7 @@ If you’re deploying Vault into an existing VPC, make sure that any private sub
 <div class="sect3">
 <h4 id="_kubernetes_consul_deployment_namespace_and_dedicated_node_selection">Kubernetes Consul deployment namespace and dedicated node selection:</h4>
 <div class="paragraph">
-<p>The deployment creates a namespace named <code>vault-server</code> by default. To verify the namespace in kuberkenes, please
+<p>The deployment creates a namespace named <code>vault-server</code> by default. To verify the namespace in Kubernetes, please
 run the following:</p>
 </div>
 <div class="listingblock">
@@ -1375,7 +1375,7 @@ vault-sg-01f5e0c0d6458ed88-ui                   LoadBalancer   172.20.59.230    
 <div class="content">
 <pre>$ kubectl exec -ti -n vault-server vault-sg-01f5e0c0d6458ed88-0 -- /bin/sh
 / $ export VAULT_SKIP_VERIFY=true
-/ $ vault login s.JWF4aKPvElAEzFZZzojl9cgZ
+/ $ vault login s.JWF4aXXXXXXXXXXXXX9cgZ
 Success! You are now authenticated. The token information displayed below
 is already stored in the token helper. You do NOT need to run "vault login"
 again. Future Vault requests will automatically use this token.
@@ -1486,19 +1486,19 @@ Quick Start:</p>
 <ul>
 <li>
 <p>Enabled AWS KMS auto-unseal: This will make use of AWS KMS for storing and encrypting Vault&#8217;s unseal keys. For more info, please visit
-[Auto-unseal using AWS KMS](<a href="https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms" class="bare">https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms</a>)</p>
+<a href="https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms" target="_blank" rel="noopener">Auto-unseal using AWS KMS</a>.</p>
 </li>
 <li>
-<p>Enable Cluster HA: This will make sure that Vault is set up for fault tolerance. For more info, please visit [Vault HA Cluster with Integrated Storage](<a href="https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive" class="bare">https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive</a>)</p>
+<p>Enable Cluster HA: This will make sure that Vault is set up for fault tolerance. For more info, please visit <a href="https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive" target="_blank" rel="noopener">Vault HA Cluster with Integrated Storage</a>.</p>
 </li>
 <li>
-<p>Enable Raft storage for  HA: This will set up the raft consensus protocol as Vault&#8217;s storage backend. For more info, please visit [Use Integrated Storage for HA Coordination](<a href="https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive" class="bare">https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive</a>)</p>
+<p>Enable Raft storage for  HA: This will set up the raft consensus protocol as Vault&#8217;s storage backend. For more info, please visit <a href="https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive" target="_blank" rel="noopener">Use Integrated Storage for HA Coordination</a>.</p>
 </li>
 <li>
-<p>Enable Vault audit to AWS CloudWatch: This will enable audit logs for troubleshoooting. For more info, please visit [Enabling audit devices](<a href="https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices" class="bare">https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices</a>)</p>
+<p>Enable Vault audit to AWS CloudWatch: This will enable audit logs for troubleshooting. For more info, please visit <a href="https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices" target="_blank" rel="noopener">Enabling audit devices</a>.</p>
 </li>
 <li>
-<p>Enable SSL at the Vault UI endpoint: This will secure the Vault UI endpoint with a SSL certificate. For more info, please visit [Vault UI](<a href="https://www.vaultproject.io/docs/configuration/ui" class="bare">https://www.vaultproject.io/docs/configuration/ui</a>)</p>
+<p>Enable SSL at the Vault UI endpoint: This will secure the Vault UI endpoint with a SSL certificate. For more info, please visit <a href="https://www.vaultproject.io/docs/configuration/ui" target="_blank" rel="noopener">Vault UI</a>.</p>
 </li>
 </ul>
 </div>
