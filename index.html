@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<title>Vault on Amazon EKS on the AWS Cloud</title>
+<title></title>
 <style>
 
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -808,9 +808,12 @@ p.footer-text a{color:#d7d8d8}
 <li><a href="#_launch_the_quick_start">Launch the Quick Start</a></li>
 </ul>
 </li>
-<li><a href="#_post_deployment_steps">Post deployment steps</a></li>
+<li><a href="#_post_deployment_steps">Post deployment steps</a>
+<ul class="sectlevel2">
+<li><a href="#_test_the_deployment">Test the deployment</a></li>
 <li><a href="#_best_practices_for_using_vault_on_aws">Best practices for using Vault on AWS</a></li>
-<li><a href="#_security">Security</a></li>
+</ul>
+</li>
 <li><a href="#_other_useful_information">Other useful information</a></li>
 <li><a href="#_faq">FAQ</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a></li>
@@ -851,7 +854,7 @@ p.footer-text a{color:#d7d8d8}
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph text-center">
 <p><strong>October, 2020</strong><br>
 <em>Dan Callao - HashiCorp</em><br>
-<em>Andrew Gargan - AWS Partner SA</em></p>
+<em>Andrew Gargan - AWS Solutions Architect</em></p>
 </div></div></td>
 </tr>
 </tbody>
@@ -995,20 +998,6 @@ collaborated with AWS on the content of the Quick Start.
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><div class="content"><div class="paragraph">
-<p>Deploying this Quick Start for a new virtual private cloud (VPC) with
-default parameters builds the following <em>Vault</em> environment in the
-AWS Cloud.</p>
-</div>
-<div id="architecture1" class="imageblock">
-<div class="content">
-<a class="image" href="images/architecture.png"><img src="images/architecture_diagram.png" alt="Architecture" width="648" height="439"></a>
-</div>
-<div class="title">Figure 2. Quick Start architecture for <em>Vault</em> on Amazon EKS</div>
-</div>
-<div class="paragraph">
-<p>As shown in Figure 1, the Quick Start sets up the following:</p>
-</div>
-<div class="paragraph">
 <p>In AWS:</p>
 </div>
 <div class="ulist">
@@ -1252,14 +1241,14 @@ You are responsible for the cost of the AWS services used while running this Qui
 </colgroup>
 <tbody>
 <tr>
-<td class="tableblock halign-center valign-top"><p class="tableblock">{launch_new_vpc}[Deploy into a new VPC and new EKS cluster^]</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">{launch_existing_vpc}[Deploy into a new EKS cluster in an existing VPC^]</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">{launch_existing_cluster}[Deploy into an existing EKS cluster^]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/p6VXj" target="_blank" rel="noopener">Deploy into a new VPC and new EKS cluster</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/wbebP" target="_blank" rel="noopener">Deploy into a new EKS cluster in an existing VPC</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/5EmBq" target="_blank" rel="noopener">Deploy into an existing EKS cluster</a></p></td>
 </tr>
 <tr>
-<td class="tableblock halign-center valign-top"><p class="tableblock">{template_new_vpc}[View template^]</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">{template_existing_vpc}[View template^]</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">{template_existing_cluster}[View template^]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/DgqPB" target="_blank" rel="noopener">View template</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/mbD5g" target="_blank" rel="noopener">View template</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="https://fwd.aws/NmpDr" target="_blank" rel="noopener">View template</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -1310,7 +1299,7 @@ If you’re deploying Vault into an existing VPC, make sure that any private sub
 <div class="content">
 <a class="image" href="images/cfn_outputs.png"><img src="images/cfn_outputs.png" alt="cfn_outputs" width="648" height="439"></a>
 </div>
-<div class="title">Figure 3. Vault outputs after successful deployment</div>
+<div class="title">Figure 2. Vault outputs after successful deployment</div>
 </div>
 <div class="paragraph">
 <p><em><strong>This portion of the deployment guide is located at <code>docs/partner_editable/additional_info.adoc</code></strong></em></p>
@@ -1322,41 +1311,198 @@ If you’re deploying Vault into an existing VPC, make sure that any private sub
 <div class="sect1">
 <h2 id="_post_deployment_steps">Post deployment steps</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_test_the_deployment">Test the deployment</h3>
+<div class="sect3">
+<h4 id="_kubernetes_consul_deployment_namespace_and_dedicated_node_selection">Kubernetes Consul deployment namespace and dedicated node selection:</h4>
 <div class="paragraph">
-<p>See the Vault on Amazon EKS <a href="https://www.vaultproject.io/guides" class="external" target="_blank" rel="noopener">user guide</a> to configure
-Vault on Amazon EKS.</p>
+<p>The deployment creates a namespace named <code>vault-server</code> by default. To verify the namespace in kuberkenes, please
+run the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ kubectl get ns
+NAME              STATUS   AGE
+consul-qs         Active   4d3h
+default           Active   4d7h
+kube-node-lease   Active   4d7h
+kube-public       Active   4d7h
+kube-system       Active   4d7h
+vault-server      Active   30m</pre>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_best_practices_for_using_vault_on_aws">Best practices for using Vault on AWS</h2>
-<div class="sectionbody">
 <div class="paragraph">
-<p>The Vault UI is provided for exploratory purposes. We recommend keeping the Vault on Amazon EKS.</p>
+<p>The deployment builds kubernetes server pods of the <code>vault-server</code> namespace on dedicated nodes. To verify the dedicated nodes,
+please run the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ kubectl get pods -o wide -n vault-server
+NAME                                                        READY   STATUS      RESTARTS   AGE   IP            NODE                                         NOMINATED NODE   READINESS GATES
+boot-vault-sg-01f5e0c0d6458ed88-5hrf8                       0/1     Completed   0          25m   10.0.32.188   ip-10-0-60-134.eu-north-1.compute.internal   &lt;none&gt;           &lt;none&gt;
+boot-vault-sg-01f5e0c0d6458ed88-dfwkp                       0/1     Error       0          27m   10.0.59.145   ip-10-0-60-134.eu-north-1.compute.internal   &lt;none&gt;           &lt;none&gt;
+certificate-vault-sg-01f5e0c0d6458ed88-24h6n                0/1     Completed   0          29m   10.0.30.86    ip-10-0-16-209.eu-north-1.compute.internal   &lt;none&gt;           &lt;none&gt;
+vault-sg-01f5e0c0d6458ed88-0                                1/1     Running     0          26m   10.0.12.215   ip-10-0-6-233.eu-north-1.compute.internal    &lt;none&gt;           &lt;none&gt;
+vault-sg-01f5e0c0d6458ed88-1                                1/1     Running     0          26m   10.0.64.124   ip-10-0-86-92.eu-north-1.compute.internal    &lt;none&gt;           &lt;none&gt;
+vault-sg-01f5e0c0d6458ed88-2                                1/1     Running     0          26m   10.0.55.38    ip-10-0-60-134.eu-north-1.compute.internal   &lt;none&gt;           &lt;none&gt;
+vault-sg-01f5e0c0d6458ed88-agent-injector-b76f744b6-6pjp9   1/1     Running     0          26m   10.0.86.51    ip-10-0-86-92.eu-north-1.compute.internal    &lt;none&gt;           &lt;none&gt;</pre>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_security">Security</h2>
-<div class="sectionbody">
+<div class="sect3">
+<h4 id="_kubernetes_services">Kubernetes services:</h4>
+<div class="paragraph">
+<p>The deployment creates a minimum of 7 services as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ kubectl get svc -n vault-server
+NAME                                            TYPE           CLUSTER-IP       EXTERNAL-IP                                                                PORT(S)             AGE
+vault-sg-01f5e0c0d6458ed88                      ClusterIP      172.20.238.238   &lt;none&gt;                                                                     8200/TCP,8201/TCP   27m
+vault-sg-01f5e0c0d6458ed88-active               ClusterIP      172.20.9.90      &lt;none&gt;                                                                     8200/TCP,8201/TCP   27m
+vault-sg-01f5e0c0d6458ed88-agent-injector-svc   ClusterIP      172.20.235.220   &lt;none&gt;                                                                     443/TCP             27m
+vault-sg-01f5e0c0d6458ed88-internal             ClusterIP      None             &lt;none&gt;                                                                     8200/TCP,8201/TCP   27m
+vault-sg-01f5e0c0d6458ed88-standby              ClusterIP      172.20.169.201   &lt;none&gt;                                                                     8200/TCP,8201/TCP   27m
+vault-sg-01f5e0c0d6458ed88-ui                   LoadBalancer   172.20.59.230    a4b85f61XXXXXXXXX01d-1681023831.eu-north-1.elb.amazonaws.com   443:32436/TCP       27m</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_vault_ha_configuration">Vault HA configuration:</h4>
+<div class="paragraph">
+<p>Verify the Vault HA configuration by running the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ kubectl exec -ti -n vault-server vault-sg-01f5e0c0d6458ed88-0 -- /bin/sh
+/ $ export VAULT_SKIP_VERIFY=true
+/ $ vault login s.JWF4aKPvElAEzFZZzojl9cgZ
+Success! You are now authenticated. The token information displayed below
+is already stored in the token helper. You do NOT need to run "vault login"
+again. Future Vault requests will automatically use this token.
+
+Key                  Value
+---                  -----
+token                s.JWF4aKPXXXXXXXXXXXojl9cgZ
+token_accessor       xceUAbCKAAS86OKupBK2Bhlr
+token_duration       ∞
+token_renewable      false
+token_policies       ["root"]
+identity_policies    []
+policies             ["root"]
+/ $ vault status
+Key                      Value
+---                      -----
+Recovery Seal Type       shamir
+Initialized              true
+Sealed                   false
+Total Recovery Shares    5
+Threshold                3
+Version                  1.5.3
+Cluster Name             vault-cluster-9abfeb1c
+Cluster ID               f04374ee-3ebe-4e0f-fa50-892d48421e70
+HA Enabled               true
+HA Cluster               https://vault-sg-01f5e0c0d6458ed88-0.vault-sg-01f5e0c0d6458ed88-internal:8201
+HA Mode                  active
+Raft Committed Index     119
+Raft Applied Index       119</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Observe the HA Enabled, HA Cluster and HA mode configuration entries in above output.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_vault_ui_ssl_certificatethis_is_done_by_verifying_the_dns_endpoint_of_the_deployment_and_checking_for_the_ssl_cert_installation">Vault UI SSL certificate:This is done by verifying the DNS endpoint of the deployment and checking for the SSL cert installation</h4>
+<div class="listingblock">
+<div class="content">
+<pre>$ openssl s_client -connect  lonconsul.gargana.myinstance.com:443
+CONNECTED(00000007)
+depth=2 C = US, O = Amazon, CN = Amazon Root CA 1
+verify return:1
+depth=1 C = US, O = Amazon, OU = Server CA 1B, CN = Amazon
+verify return:1
+depth=0 CN = lonconsul.gargana.myinstance.com
+verify return:1
+---
+Certificate chain
+0 s:CN = lonconsul.gargana.myinstance.com
+i:C = US, O = Amazon, OU = Server CA 1B, CN = Amazon
+1 s:C = US, O = Amazon, OU = Server CA 1B, CN = Amazon
+i:C = US, O = Amazon, CN = Amazon Root CA 1
+2 s:C = US, O = Amazon, CN = Amazon Root CA 1
+i:C = US, ST = Arizona, L = Scottsdale, O = "Starfield Technologies, Inc.", CN = Starfield Services Root Certificate Authority - G2
+3 s:C = US, ST = Arizona, L = Scottsdale, O = "Starfield Technologies, Inc.", CN = Starfield Services Root Certificate Authority - G2
+i:C = US, O = "Starfield Technologies, Inc.", OU = Starfield Class 2 Certification Authority
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIFrDCCBJSgAwIBAgIQA+/KZ0HG5aT6xAZLv0NjlDANBgkqhkiG9w0BAQsFADBG
+MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRUwEwYDVQQLEwxTZXJ2ZXIg
+Q0EgMUIxDzANBgNVBAMTBkFtYXpvbjAeFw0yMDEwMTUwMDAwMDBaFw0yMTExMTMy
+MzU5NTlaMCsxKTAnBgNVBAMTIGxvbmNvbnN1bC5nYXJnYW5hLm15aW5zdGFuY2Uu
+....
+....
+....
+....
+NOEMjRe008xraTpAzfSjr2fupjltJB6lXehPe5sJaWPJ0mX3OBt4VyfrO6MYdmpy
+iGLhMXM357+CN75aMv1BD4pVA+a75dhvcUOfZCni4guQ+7wbbwONrKdwtg9FudWf
+XzvTdg1Q8VPfuQWUJb8tmITseg+8KDTyUn1u2SiNWHj17hBTSBTjkVt97id0BtZ/
+UYrBWVldmJw0pJ6XYgQc6pBg6A86390sGkRzOfhYkT8AIbKNKSwtCRV0aBY2Nb4+
+i81nP0KKeSvWcRf4/Gj+WA==
+-----END CERTIFICATE-----
+subject=CN = lonconsul.gargana.myinstance.com
+
+issuer=C = US, O = Amazon, OU = Server CA 1B, CN = Amazon
+
+---</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_vault_raft_peer_election">Vault raft peer election:</h4>
+<div class="paragraph">
+<p>To check on the  raft peer election status, run the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ kubectl exec -ti -n vault-server vault-sg-01f5e0c0d6458ed88-0 -- /bin/sh
+/ $ vault operator raft list-peers
+Node                            Address                                                                  State       Voter
+----                            -------                                                                  -----       -----
+vault-sg-01f5e0c0d6458ed88-0    vault-sg-01f5e0c0d6458ed88-0.vault-sg-01f5e0c0d6458ed88-internal:8201    leader      true
+vault-sg-01f5e0c0d6458ed88-1    vault-sg-01f5e0c0d6458ed88-1.vault-sg-01f5e0c0d6458ed88-internal:8201    follower    true
+vault-sg-01f5e0c0d6458ed88-2    vault-sg-01f5e0c0d6458ed88-2.vault-sg-01f5e0c0d6458ed88-internal:8201    follower    true</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_best_practices_for_using_vault_on_aws">Best practices for using Vault on AWS</h3>
+<div class="paragraph">
+<p>These are the best best practices for using Vault on Amazon EKS Please note that these best practices are enabled by default in this
+Quick Start:</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p>End to end TLS is enforced.</p>
+<p>Enabled AWS KMS auto-unseal: This will make use of AWS KMS for storing and encrypting Vault&#8217;s unseal keys. For more info, please visit
+[Auto-unseal using AWS KMS](<a href="https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms" class="bare">https://learn.hashicorp.com/tutorials/vault/autounseal-aws-kms</a>)</p>
 </li>
 <li>
-<p>A dedicated Kubernetes namespace is created for Vault on Amazon EKS Kubernetes resources.</p>
+<p>Enable Cluster HA: This will make sure that Vault is set up for fault tolerance. For more info, please visit [Vault HA Cluster with Integrated Storage](<a href="https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive" class="bare">https://learn.hashicorp.com/tutorials/vault/raft-storage?in=vault/interactive</a>)</p>
 </li>
 <li>
-<p>AWS KMS is used to perform auto-unseal of the Vault on Amazon EKS servers.</p>
+<p>Enable Raft storage for  HA: This will set up the raft consensus protocol as Vault&#8217;s storage backend. For more info, please visit [Use Integrated Storage for HA Coordination](<a href="https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive" class="bare">https://learn.hashicorp.com/tutorials/vault/raft-ha-storage?in=vault/interactive</a>)</p>
 </li>
 <li>
-<p>Vault on Amazon EKS is running on dedicated Kubernetes nodes.</p>
+<p>Enable Vault audit to AWS CloudWatch: This will enable audit logs for troubleshoooting. For more info, please visit [Enabling audit devices](<a href="https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices" class="bare">https://learn.hashicorp.com/tutorials/vault/troubleshooting-vault#enabling-audit-devices</a>)</p>
 </li>
 <li>
-<p>Initial Vault on Amazon EKS1 root keys are stored in AWS Secrets manager.</p>
+<p>Enable SSL at the Vault UI endpoint: This will secure the Vault UI endpoint with a SSL certificate. For more info, please visit [Vault UI](<a href="https://www.vaultproject.io/docs/configuration/ui" class="bare">https://www.vaultproject.io/docs/configuration/ui</a>)</p>
 </li>
 </ul>
+</div>
 </div>
 </div>
 </div>
