@@ -9,7 +9,6 @@ run the following:
 ----
 $ kubectl get ns
 NAME              STATUS   AGE
-consul-qs         Active   4d3h
 default           Active   4d7h
 kube-node-lease   Active   4d7h
 kube-public       Active   4d7h
